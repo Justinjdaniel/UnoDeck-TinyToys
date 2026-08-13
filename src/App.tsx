@@ -844,7 +844,7 @@ export default function App() {
           </div>
 
           <h3 className="text-3xl font-black text-center text-white tracking-tight uppercase leading-none mb-1">
-            Victory!
+            {gameState.winnerId === 'player-0' ? 'Victory!' : 'Defeat!'}
           </h3>
           <p className="text-slate-400 text-sm text-center max-w-xs mb-8">
             {gameState.winnerId === 'player-0'

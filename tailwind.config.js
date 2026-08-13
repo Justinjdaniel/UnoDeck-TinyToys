@@ -1,9 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
@@ -13,7 +10,7 @@ export default {
           green: '#55aa55',
           yellow: '#ffaa00',
           dark: '#111111',
-        }
+        },
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
@@ -30,8 +27,8 @@ export default {
         playCard: {
           '0%': { transform: 'scale(1)', opacity: '1' },
           '100%': { transform: 'scale(1.2) translateY(-50px)', opacity: '0' },
-        }
-      }
+        },
+      },
     },
   },
   plugins: [],

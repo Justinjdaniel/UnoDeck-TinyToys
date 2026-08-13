@@ -49,7 +49,7 @@ describe('UnoEngine Class Tests', () => {
 
   it('validates card match rules correctly', () => {
     engine.startGame()
-    const state = engine.getState()
+    const state = engine.state // use actual state instead of clone
 
     // Mock starting card on discard pile
     const mockTopCard: UnoCard = { id: 'top', color: 'Red', value: '5' }
@@ -151,7 +151,7 @@ describe('UnoEngine Class Tests', () => {
     ]
     engine.playCard('player-0', 'd2-p1')
 
-    let tempState = engine.getState()
+    const tempState = engine.getState()
     expect(tempState.activeDrawPenalty).toBe(2)
     expect(tempState.currentPlayerIndex).toBe(1)
 
@@ -162,9 +162,9 @@ describe('UnoEngine Class Tests', () => {
     ]
     engine.playCard('player-1', 'd2-p2')
 
-    tempState = engine.getState()
-    expect(tempState.activeDrawPenalty).toBe(4)
-    expect(tempState.currentPlayerIndex).toBe(2)
+    const nextState = engine.getState()
+    expect(nextState.activeDrawPenalty).toBe(4)
+    expect(nextState.currentPlayerIndex).toBe(2)
 
     // Charlie has to draw penalty cards
     engine.state.players[2].hand = [{ id: 'normal-card', color: 'Green', value: '9' }]
@@ -202,6 +202,7 @@ describe('UnoEngine Class Tests', () => {
     engine.state.activeDrawPenalty = 0
     engine.state.selectedWildCard = null
     engine.state.wildColorSelected = null
+    engine.state.direction = 'clockwise'
     engine.state.discardPile = [{ id: 'starter', color: 'Red', value: '5' }]
 
     const wildCard: UnoCard = { id: 'wild-card', color: 'Wild', value: 'Wild' }
@@ -224,7 +225,7 @@ describe('UnoEngine Class Tests', () => {
 
   it('handles UNO calling rules and challenging', () => {
     engine.startGame()
-    const state = engine.getState()
+    const state = engine.state // use actual state instead of clone
 
     const alice = state.players[0]
     const bob = state.players[1]
@@ -237,12 +238,40 @@ describe('UnoEngine Class Tests', () => {
     expect(tempState.players[0].hand).toHaveLength(3)
 
     alice.hand = [{ id: 'one-left-again', color: 'Red', value: '5' }]
-    tempState.unoCalls[alice.id] = false
+    engine.state.unoCalls[alice.id] = false
 
     engine.sayUno(alice.id)
     engine.challengeUno(bob.id, alice.id)
 
     const finalState = engine.getState()
     expect(finalState.players[0].hand).toHaveLength(1)
+  })
+
+  it('calls makeBotDecision, bot declares UNO when reduced to 1 card', () => {
+    engine.startGame()
+
+    // Setup: It is Bob's turn (player-1), Bob is a Bot.
+    engine.state.currentPlayerIndex = 1
+    engine.state.activeDrawPenalty = 0
+    engine.state.selectedWildCard = null
+    engine.state.wildColorSelected = null
+    engine.state.direction = 'clockwise'
+    engine.state.discardPile = [{ id: 'starter', color: 'Red', value: '5' }]
+
+    // Give Bob exactly 2 cards, one of which is playable Red 1
+    const card1: UnoCard = { id: 'playable-bot-card', color: 'Red', value: '1' }
+    const card2: UnoCard = { id: 'unplayable-bot-card', color: 'Blue', value: '9' }
+    engine.state.players[1].hand = [card1, card2]
+
+    // Initially Bob has not declared UNO
+    expect(engine.state.unoCalls['player-1']).toBeFalsy()
+
+    // Trigger bot turn decision
+    engine.makeBotDecision()
+
+    // Bob plays playable-bot-card, reducing his hand to 1 card.
+    // He must yell UNO!
+    expect(engine.state.unoCalls['player-1']).toBe(true)
+    expect(engine.state.players[1].hand).toHaveLength(1)
   })
 })

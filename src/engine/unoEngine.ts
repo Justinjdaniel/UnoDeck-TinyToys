@@ -45,6 +45,8 @@ export interface UnoGameState {
   wildColorSelected: CardColor | null // Holds chosen color for wild cards
   selectedWildCard: UnoCard | null // Holds wild card that was played and is awaiting color selection
   lastActionDescription: string
+  hasDrawnThisTurn: boolean // Track if current player has drawn a card this turn
+  isWildFromPlay: boolean // Track if the pending wild card was played from hand (versus starter card)
 }
 
 export class UnoEngine {
@@ -75,11 +77,23 @@ export class UnoEngine {
       wildColorSelected: null,
       selectedWildCard: null,
       lastActionDescription: 'Game initialized. Waiting to start.',
+      hasDrawnThisTurn: false,
+      isWildFromPlay: false,
     }
   }
 
+  // Returns a deep clone structural snapshot
   public getState(): UnoGameState {
-    return this.state
+    return {
+      ...this.state,
+      players: this.state.players.map((p) => ({
+        ...p,
+        hand: p.hand.map((c) => ({ ...c })),
+      })),
+      deck: this.state.deck.map((c) => ({ ...c })),
+      discardPile: this.state.discardPile.map((c) => ({ ...c })),
+      unoCalls: { ...this.state.unoCalls },
+    }
   }
 
   // Generates 108 card standard deck
@@ -180,6 +194,8 @@ export class UnoEngine {
       wildColorSelected: null,
       selectedWildCard: null,
       lastActionDescription: `Game started! Starting card is ${starterCard.color} ${starterCard.value}.`,
+      hasDrawnThisTurn: false,
+      isWildFromPlay: false,
     }
 
     // Apply first card action effects if it's special
@@ -207,6 +223,7 @@ export class UnoEngine {
       this.state.lastActionDescription += ` Draw 2 starts an active penalty of 2 cards.`
     } else if (card.value === 'Wild') {
       this.state.selectedWildCard = card
+      this.state.isWildFromPlay = false
       this.state.lastActionDescription += ` Wild card start. Awaiting color selection.`
     }
   }
@@ -220,6 +237,14 @@ export class UnoEngine {
     const activeColor = this.state.wildColorSelected || topCard.color
 
     return card.color === activeColor || card.value === topCard.value
+  }
+
+  // Stacking validation helper
+  private canStackOnPenalty(topCard: UnoCard, card: UnoCard): boolean {
+    return (
+      (topCard.value === 'Draw2' && card.value === 'Draw2') ||
+      (topCard.value === 'WildDraw4' && card.value === 'WildDraw4')
+    )
   }
 
   public playCard(playerId: string, cardId: string): void {
@@ -241,11 +266,7 @@ export class UnoEngine {
 
     if (this.state.activeDrawPenalty > 0) {
       const topCard = this.state.discardPile[this.state.discardPile.length - 1]
-      const canStack =
-        (topCard.value === 'Draw2' && card.value === 'Draw2') ||
-        (topCard.value === 'WildDraw4' && card.value === 'WildDraw4')
-
-      if (!canStack) {
+      if (!this.canStackOnPenalty(topCard, card)) {
         throw new Error('You must draw cards to satisfy the active penalty.')
       }
     }
@@ -295,8 +316,10 @@ export class UnoEngine {
     } else if (card.value === 'WildDraw4') {
       this.state.activeDrawPenalty += 4
       this.state.selectedWildCard = card
+      this.state.isWildFromPlay = true
     } else if (card.value === 'Wild') {
       this.state.selectedWildCard = card
+      this.state.isWildFromPlay = true
     } else {
       this.moveToNextPlayer()
     }
@@ -321,12 +344,12 @@ export class UnoEngine {
     }
 
     this.state.wildColorSelected = color
-    const wildCard = this.state.selectedWildCard
     this.state.selectedWildCard = null
 
     this.state.lastActionDescription = `${currentPlayer.name} chose ${color} as the wild color.`
 
-    if (wildCard.value === 'WildDraw4' || wildCard.value === 'Wild') {
+    // Run moveToNextPlayer ONLY if it was played from hand
+    if (this.state.isWildFromPlay) {
       this.moveToNextPlayer()
     }
   }
@@ -339,6 +362,10 @@ export class UnoEngine {
     const currentPlayer = this.state.players[this.state.currentPlayerIndex]
     if (currentPlayer.id !== playerId) {
       throw new Error("It is not this player's turn.")
+    }
+
+    if (this.state.hasDrawnThisTurn) {
+      throw new Error('You have already drawn a card this turn.')
     }
 
     if (this.state.deck.length <= this.state.activeDrawPenalty + 2) {
@@ -372,6 +399,7 @@ export class UnoEngine {
 
     currentPlayer.hand.push(card)
     this.state.lastActionDescription = `${currentPlayer.name} drew a card.`
+    this.state.hasDrawnThisTurn = true
 
     if (currentPlayer.hand.length > 1) {
       this.state.unoCalls[currentPlayer.id] = false
@@ -380,6 +408,25 @@ export class UnoEngine {
     if (!this.isValidMove(card)) {
       this.moveToNextPlayer()
     }
+  }
+
+  // End turn when they decline to play drawn card
+  public pass(playerId: string): void {
+    if (this.state.status !== 'PLAYING') {
+      throw new Error('Game is not active.')
+    }
+
+    const currentPlayer = this.state.players[this.state.currentPlayerIndex]
+    if (currentPlayer.id !== playerId) {
+      throw new Error("It is not this player's turn to pass.")
+    }
+
+    if (!this.state.hasDrawnThisTurn) {
+      throw new Error('You must draw a card before passing.')
+    }
+
+    this.state.lastActionDescription = `${currentPlayer.name} passed.`
+    this.moveToNextPlayer()
   }
 
   public sayUno(playerId: string): void {
@@ -425,6 +472,7 @@ export class UnoEngine {
   }
 
   public moveToNextPlayer(): void {
+    this.state.hasDrawnThisTurn = false
     const totalPlayers = this.state.players.length
     if (this.state.direction === 'clockwise') {
       this.state.currentPlayerIndex = (this.state.currentPlayerIndex + 1) % totalPlayers
@@ -447,6 +495,19 @@ export class UnoEngine {
     this.state.deck = [...shuffled, ...this.state.deck]
   }
 
+  // AI bot pick color selection helper
+  private pickBestColor(hand: UnoCard[]): CardColor {
+    const colors: CardColor[] = ['Red', 'Blue', 'Green', 'Yellow']
+    const counts = colors.reduce(
+      (acc, color) => {
+        acc[color] = hand.filter((c) => c.color === color).length
+        return acc
+      },
+      {} as Record<CardColor, number>,
+    )
+    return colors.reduce((a, b) => (counts[a] >= counts[b] ? a : b), 'Red')
+  }
+
   public makeBotDecision(): void {
     const activePlayer = this.state.players[this.state.currentPlayerIndex]
     if (!activePlayer || !activePlayer.isBot || this.state.status !== 'PLAYING') {
@@ -456,51 +517,51 @@ export class UnoEngine {
     const playableCards = activePlayer.hand.filter((card) => {
       if (this.state.activeDrawPenalty > 0) {
         const topCard = this.state.discardPile[this.state.discardPile.length - 1]
-        return (
-          (topCard.value === 'Draw2' && card.value === 'Draw2') ||
-          (topCard.value === 'WildDraw4' && card.value === 'WildDraw4')
-        )
+        return this.canStackOnPenalty(topCard, card)
       }
       return this.isValidMove(card)
     })
 
     if (this.state.selectedWildCard) {
-      const colors: CardColor[] = ['Red', 'Blue', 'Green', 'Yellow']
-      const counts = colors.reduce(
-        (acc, color) => {
-          acc[color] = activePlayer.hand.filter((c) => c.color === color).length
-          return acc
-        },
-        {} as Record<CardColor, number>,
-      )
-      const bestColor = colors.reduce((a, b) => (counts[a] >= counts[b] ? a : b), 'Red')
+      const bestColor = this.pickBestColor(activePlayer.hand)
       this.chooseWildColor(activePlayer.id, bestColor)
       return
     }
 
     if (playableCards.length > 0) {
       const cardToPlay = playableCards[0]
-
-      if (activePlayer.hand.length === 2) {
-        this.sayUno(activePlayer.id)
-      }
+      const shouldSayUno = activePlayer.hand.length === 2
 
       this.playCard(activePlayer.id, cardToPlay.id)
 
+      if (shouldSayUno) {
+        this.sayUno(activePlayer.id)
+      }
+
       if (cardToPlay.color === 'Wild' && this.state.selectedWildCard) {
-        const colors: CardColor[] = ['Red', 'Blue', 'Green', 'Yellow']
-        const counts = colors.reduce(
-          (acc, color) => {
-            acc[color] = activePlayer.hand.filter((c) => c.color === color).length
-            return acc
-          },
-          {} as Record<CardColor, number>,
-        )
-        const bestColor = colors.reduce((a, b) => (counts[a] >= counts[b] ? a : b), 'Red')
+        const bestColor = this.pickBestColor(activePlayer.hand)
         this.chooseWildColor(activePlayer.id, bestColor)
       }
     } else {
-      this.drawCard(activePlayer.id)
+      if (this.state.hasDrawnThisTurn) {
+        this.pass(activePlayer.id)
+      } else {
+        this.drawCard(activePlayer.id)
+        // If they drew a playable card but can decide to play it or pass, let them pass if still their turn.
+        const currentActive = this.state.players[this.state.currentPlayerIndex]
+        if (currentActive.id === activePlayer.id) {
+          const playableAfterDraw = activePlayer.hand.filter((c) => this.isValidMove(c))
+          if (playableAfterDraw.length > 0) {
+            const shouldSayUno = activePlayer.hand.length === 2
+            this.playCard(activePlayer.id, playableAfterDraw[0].id)
+            if (shouldSayUno) {
+              this.sayUno(activePlayer.id)
+            }
+          } else {
+            this.pass(activePlayer.id)
+          }
+        }
+      }
     }
   }
 }
