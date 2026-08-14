@@ -3,196 +3,36 @@ import { Play, Volume2, VolumeX, Sparkles, CheckCircle2, Info, Zap } from 'lucid
 import confetti from 'canvas-confetti'
 import { UnoEngine, type CardColor, type UnoCard } from './engine/unoEngine'
 import { Board } from './components/Board'
-
-// Sound FX Helpers using simple Web Audio API synthesis
-class SoundFX {
-  private ctx: AudioContext | null = null
-  private muted: boolean = false
-
-  constructor() {
-    // Lazy initialized
-  }
-
-  private initCtx() {
-    if (!this.ctx) {
-      this.ctx = new (
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-      )()
-    }
-  }
-
-  public setMute(muted: boolean) {
-    this.muted = muted
-  }
-
-  public isMuted() {
-    return this.muted
-  }
-
-  public playCardSound() {
-    if (this.muted) return
-    try {
-      this.initCtx()
-      if (!this.ctx) return
-      const osc = this.ctx.createOscillator()
-      const gain = this.ctx.createGain()
-
-      osc.type = 'triangle'
-      osc.frequency.setValueAtTime(300, this.ctx.currentTime)
-      osc.frequency.exponentialRampToValueAtTime(150, this.ctx.currentTime + 0.15)
-
-      gain.gain.setValueAtTime(0.2, this.ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15)
-
-      osc.connect(gain)
-      gain.connect(this.ctx.destination)
-
-      osc.start()
-      osc.stop(this.ctx.currentTime + 0.15)
-    } catch {
-      // Ignored
-    }
-  }
-
-  public playDrawSound() {
-    if (this.muted) return
-    try {
-      this.initCtx()
-      if (!this.ctx) return
-      const osc = this.ctx.createOscillator()
-      const gain = this.ctx.createGain()
-
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(200, this.ctx.currentTime)
-      osc.frequency.exponentialRampToValueAtTime(400, this.ctx.currentTime + 0.1)
-
-      gain.gain.setValueAtTime(0.15, this.ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1)
-
-      osc.connect(gain)
-      gain.connect(this.ctx.destination)
-
-      osc.start()
-      osc.stop(this.ctx.currentTime + 0.1)
-    } catch {
-      // Ignored
-    }
-  }
-
-  public playSpecialSound() {
-    if (this.muted) return
-    try {
-      this.initCtx()
-      if (!this.ctx) return
-      const osc1 = this.ctx.createOscillator()
-      const osc2 = this.ctx.createOscillator()
-      const gain = this.ctx.createGain()
-
-      osc1.type = 'sawtooth'
-      osc1.frequency.setValueAtTime(440, this.ctx.currentTime)
-      osc1.frequency.linearRampToValueAtTime(880, this.ctx.currentTime + 0.25)
-
-      osc2.type = 'triangle'
-      osc2.frequency.setValueAtTime(330, this.ctx.currentTime)
-      osc2.frequency.linearRampToValueAtTime(660, this.ctx.currentTime + 0.25)
-
-      gain.gain.setValueAtTime(0.1, this.ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25)
-
-      osc1.connect(gain)
-      osc2.connect(gain)
-      gain.connect(this.ctx.destination)
-
-      osc1.start()
-      osc2.start()
-      osc1.stop(this.ctx.currentTime + 0.25)
-      osc2.stop(this.ctx.currentTime + 0.25)
-    } catch {
-      // Ignored
-    }
-  }
-
-  public playUnoSound() {
-    if (this.muted) return
-    try {
-      this.initCtx()
-      if (!this.ctx) return
-      const osc = this.ctx.createOscillator()
-      const gain = this.ctx.createGain()
-
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(300, this.ctx.currentTime)
-      osc.frequency.setValueAtTime(600, this.ctx.currentTime + 0.08)
-      osc.frequency.setValueAtTime(1200, this.ctx.currentTime + 0.16)
-
-      gain.gain.setValueAtTime(0.25, this.ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35)
-
-      osc.connect(gain)
-      gain.connect(this.ctx.destination)
-
-      osc.start()
-      osc.stop(this.ctx.currentTime + 0.35)
-    } catch {
-      // Ignored
-    }
-  }
-
-  public playWinSound() {
-    if (this.muted) return
-    try {
-      this.initCtx()
-      if (!this.ctx) return
-      const osc1 = this.ctx.createOscillator()
-      const osc2 = this.ctx.createOscillator()
-      const gain = this.ctx.createGain()
-
-      osc1.type = 'triangle'
-      osc1.frequency.setValueAtTime(523.25, this.ctx.currentTime) // C5
-      osc1.frequency.setValueAtTime(659.25, this.ctx.currentTime + 0.1) // E5
-      osc1.frequency.setValueAtTime(783.99, this.ctx.currentTime + 0.2) // G5
-      osc1.frequency.setValueAtTime(1046.5, this.ctx.currentTime + 0.3) // C6
-
-      osc2.type = 'sine'
-      osc2.frequency.setValueAtTime(261.63, this.ctx.currentTime) // C4
-      osc2.frequency.setValueAtTime(329.63, this.ctx.currentTime + 0.1) // E4
-      osc2.frequency.setValueAtTime(392.0, this.ctx.currentTime + 0.2) // G4
-      osc2.frequency.setValueAtTime(523.25, this.ctx.currentTime + 0.3) // C5
-
-      gain.gain.setValueAtTime(0.2, this.ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.6)
-
-      osc1.connect(gain)
-      osc2.connect(gain)
-      gain.connect(this.ctx.destination)
-
-      osc1.start()
-      osc2.start()
-      osc1.stop(this.ctx.currentTime + 0.6)
-      osc2.stop(this.ctx.currentTime + 0.6)
-    } catch {
-      // Ignored
-    }
-  }
-}
-
-const sfx = new SoundFX()
+import { soundManager } from './utils/soundManager'
 
 export default function App() {
   const [engine, setEngine] = useState<UnoEngine | null>(null)
   const [gameState, setGameState] = useState<ReturnType<UnoEngine['getState']> | null>(null)
-  const [isMuted, setIsMuted] = useState(false)
+  const [isMuted, setIsMuted] = useState(() => soundManager.isMuted())
+  const [volume, setVolume] = useState(() => soundManager.getVolume())
   const [ruleModalOpen, setRuleModalOpen] = useState(false)
   const botTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Initialize standard mobile game with User vs 3 Bots
+  useEffect(() => {
+    // Preload sound context on first user interaction or mount
+    const handleFirstTouch = () => {
+      soundManager.init()
+    }
+    window.addEventListener('pointerdown', handleFirstTouch, { once: true })
+    return () => {
+      window.removeEventListener('pointerdown', handleFirstTouch)
+    }
+  }, [])
+
   const handleQuitMatch = () => {
+    soundManager.play('click')
     setEngine(null)
     setGameState(null)
   }
 
   const handleInitGame = () => {
+    soundManager.init()
+    soundManager.play('shuffle')
     const newEngine = new UnoEngine([
       { name: 'You', isBot: false },
       { name: 'Slick Bot', isBot: true },
@@ -202,18 +42,21 @@ export default function App() {
     newEngine.startGame()
     setEngine(newEngine)
     setGameState({ ...newEngine.getState() })
-    sfx.playSpecialSound()
   }
 
-  // Trigger win confetti
+  // Trigger win or lose audio & win confetti on game over
   useEffect(() => {
-    if (gameState?.status === 'GAME_OVER' && gameState.winnerId === 'player-0') {
-      confetti({
-        particleCount: 150,
-        spread: 80,
-        origin: { y: 0.6 },
-      })
-      sfx.playWinSound()
+    if (gameState?.status === 'GAME_OVER') {
+      if (gameState.winnerId === 'player-0') {
+        confetti({
+          particleCount: 150,
+          spread: 80,
+          origin: { y: 0.6 },
+        })
+        soundManager.play('win')
+      } else {
+        soundManager.play('lose')
+      }
     }
   }, [gameState?.status, gameState?.winnerId])
 
@@ -232,19 +75,13 @@ export default function App() {
         // Play appropriate sounds for bots
         const lastAction = nextState.lastActionDescription
         if (lastAction.includes('played')) {
-          const isSpecial =
-            lastAction.includes('Skip') ||
-            lastAction.includes('Reverse') ||
-            lastAction.includes('Draw') ||
-            lastAction.includes('Wild')
-          if (isSpecial) sfx.playSpecialSound()
-          else sfx.playCardSound()
+          soundManager.play('place')
         } else if (lastAction.includes('drew')) {
-          sfx.playDrawSound()
+          soundManager.play('draw')
         } else if (lastAction.includes('UNO')) {
-          sfx.playUnoSound()
+          soundManager.play('uno')
         }
-      }, 1500)
+      }, 1200)
     }
 
     return () => {
@@ -253,9 +90,20 @@ export default function App() {
   }, [engine, gameState, gameState?.currentPlayerIndex, gameState?.status])
 
   const toggleMute = () => {
-    const nextMuted = !isMuted
+    const nextMuted = soundManager.toggleMute()
     setIsMuted(nextMuted)
-    sfx.setMute(nextMuted)
+    if (!nextMuted) {
+      soundManager.play('click')
+    }
+  }
+
+  const handleVolumeChange = (newVolume: number) => {
+    soundManager.setVolume(newVolume)
+    setVolume(newVolume)
+    if (isMuted && newVolume > 0) {
+      soundManager.setMuted(false)
+      setIsMuted(false)
+    }
   }
 
   const handlePlayCard = (cardId: string) => {
@@ -270,17 +118,7 @@ export default function App() {
       engine.playCard('player-0', cardId)
       const nextState = { ...engine.getState() }
       setGameState(nextState)
-
-      const isSpecial =
-        card.color === 'Wild' ||
-        card.value === 'Skip' ||
-        card.value === 'Reverse' ||
-        card.value === 'Draw2'
-      if (isSpecial) {
-        sfx.playSpecialSound()
-      } else {
-        sfx.playCardSound()
-      }
+      soundManager.play('place')
     } catch (err: unknown) {
       alert((err as Error).message)
     }
@@ -294,7 +132,7 @@ export default function App() {
     try {
       engine.drawCard('player-0')
       setGameState({ ...engine.getState() })
-      sfx.playDrawSound()
+      soundManager.play('draw')
     } catch (err: unknown) {
       alert((err as Error).message)
     }
@@ -304,14 +142,14 @@ export default function App() {
     if (!engine || !gameState) return
     engine.sayUno('player-0')
     setGameState({ ...engine.getState() })
-    sfx.playUnoSound()
+    soundManager.play('uno')
   }
 
   const handleChallenge = (targetPlayerId: string) => {
     if (!engine || !gameState) return
     engine.challengeUno('player-0', targetPlayerId)
     setGameState({ ...engine.getState() })
-    sfx.playSpecialSound()
+    soundManager.play('click')
   }
 
   const handleChooseColor = (color: CardColor) => {
@@ -319,7 +157,7 @@ export default function App() {
     try {
       engine.chooseWildColor('player-0', color)
       setGameState({ ...engine.getState() })
-      sfx.playSpecialSound()
+      soundManager.play('click')
     } catch (err: unknown) {
       alert((err as Error).message)
     }
@@ -333,8 +171,8 @@ export default function App() {
   if (!engine || !gameState) {
     // STARTING / LANDING SCREEN
     return (
-      <div className="mobile-viewport select-none">
-        {/* Top Navbar */}
+      <div className="mobile-viewport select-none flex flex-col justify-between">
+        {/* Top Navbar with Volume Controls */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/50">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded bg-gradient-to-tr from-red-500 via-yellow-500 to-blue-500 flex items-center justify-center font-black text-slate-950 text-sm italic shadow-lg">
@@ -344,12 +182,26 @@ export default function App() {
               UnoDeck
             </h1>
           </div>
-          <button
-            onClick={toggleMute}
-            className="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-          >
-            {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-          </button>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={isMuted ? 0 : volume}
+              onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+              className="w-16 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+              title="Volume"
+            />
+            <button
+              onClick={toggleMute}
+              className="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              title={isMuted ? 'Unmute' : 'Mute'}
+            >
+              {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+            </button>
+          </div>
         </div>
 
         {/* Hero Section */}
@@ -414,6 +266,8 @@ export default function App() {
         gameState={gameState}
         handleQuitMatch={handleQuitMatch}
         isMuted={isMuted}
+        volume={volume}
+        handleVolumeChange={handleVolumeChange}
         toggleMute={toggleMute}
         ruleModalOpen={ruleModalOpen}
         setRuleModalOpen={setRuleModalOpen}
@@ -426,7 +280,7 @@ export default function App() {
         isValidPlay={isValidPlay}
       />
 
-      {/* 7. Instructions / Rules Modal */}
+      {/* Instructions / Rules Modal */}
       {ruleModalOpen && (
         <div className="absolute inset-0 bg-slate-950/95 flex flex-col justify-between p-6 z-50">
           <div className="flex-1 overflow-y-auto no-scrollbar">
@@ -473,7 +327,10 @@ export default function App() {
           </div>
 
           <button
-            onClick={() => setRuleModalOpen(false)}
+            onClick={() => {
+              soundManager.play('click')
+              setRuleModalOpen(false)
+            }}
             className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-center text-xs transition-colors mt-4"
           >
             Back to Match
