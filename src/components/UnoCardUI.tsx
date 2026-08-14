@@ -54,7 +54,8 @@ const renderSymbol = (value: string, className: string) => {
     case 'wilddraw4':
       return <Symbols.WildDraw4Symbol size="100%" className={className} />
     default:
-      return <Symbols.Number0 size="100%" className={className} />
+      // Unknown values render raw value instead of Symbols.Number0
+      return <span className={`text-base font-black italic select-none ${className}`}>{value}</span>
   }
 }
 
@@ -136,12 +137,27 @@ export const UnoCardUI: React.FC<UnoCardUIProps> = ({
     )
   }
 
+  const interactiveProps =
+    isPlayable && !disabled
+      ? {
+          role: 'button',
+          tabIndex: 0,
+          onKeyDown: (e: React.KeyboardEvent) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              onClick?.()
+            }
+          },
+        }
+      : {}
+
   return (
     <div
       onClick={!disabled && isPlayable ? onClick : undefined}
+      {...interactiveProps}
       className={`w-16 h-24 sm:w-20 sm:h-28 rounded-xl border-4 flex flex-col items-center justify-center relative flex-shrink-0 select-none transition-all ${theme.bg} ${
         isPlayable && !disabled
-          ? 'hover:-translate-y-3 hover:scale-105 active:scale-95 shadow-md border-white cursor-pointer ring-2 ring-emerald-500 ring-offset-2 ring-offset-slate-950'
+          ? 'hover:-translate-y-3 hover:scale-105 active:scale-95 shadow-md border-white cursor-pointer ring-2 ring-emerald-500 ring-offset-2 ring-offset-slate-950 focus:outline-none focus:ring-4'
           : disabled || !isPlayable
             ? 'opacity-60 grayscale-[10%]'
             : ''

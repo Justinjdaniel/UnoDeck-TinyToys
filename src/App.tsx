@@ -187,6 +187,11 @@ export default function App() {
   const botTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Initialize standard mobile game with User vs 3 Bots
+  const handleQuitMatch = () => {
+    setEngine(null)
+    setGameState(null)
+  }
+
   const handleInitGame = () => {
     const newEngine = new UnoEngine([
       { name: 'You', isBot: false },
@@ -407,6 +412,7 @@ export default function App() {
     <div className="relative w-full h-full">
       <Board
         gameState={gameState}
+        handleQuitMatch={handleQuitMatch}
         isMuted={isMuted}
         toggleMute={toggleMute}
         ruleModalOpen={ruleModalOpen}
@@ -422,7 +428,7 @@ export default function App() {
 
       {/* 7. Instructions / Rules Modal */}
       {ruleModalOpen && (
-        <div className="absolute inset-0 bg-slate-950/95 flex flex-col justify-between p-6 z-45">
+        <div className="absolute inset-0 bg-slate-950/95 flex flex-col justify-between p-6 z-50">
           <div className="flex-1 overflow-y-auto no-scrollbar">
             <div className="flex items-center gap-2 mb-4">
               <Info size={24} className="text-amber-500" />

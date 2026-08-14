@@ -4,180 +4,38 @@ interface SymbolProps extends React.SVGProps<SVGSVGElement> {
   size?: number | string
 }
 
-// Number Symbols (0-9)
-export const Number0: React.FC<SymbolProps> = ({ size = '100%', ...props }) => (
-  <svg viewBox="0 0 100 100" width={size} height={size} fill="currentColor" {...props}>
-    <text
-      x="50"
-      y="54"
-      fontSize="70"
-      fontWeight="900"
-      fontFamily="system-ui, -apple-system, sans-serif"
-      textAnchor="middle"
-      dominantBaseline="middle"
-      className="select-none font-black italic"
-    >
-      0
-    </text>
-  </svg>
-)
+// Single factory function for numbers
+const createNumberSymbol = (digit: string, hasUnderline: boolean): React.FC<SymbolProps> => {
+  return ({ size = '100%', ...props }) => (
+    <svg viewBox="0 0 100 100" width={size} height={size} fill="currentColor" {...props}>
+      <text
+        x="50"
+        y="54"
+        fontSize="70"
+        fontWeight="900"
+        fontFamily="system-ui, -apple-system, sans-serif"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        className="select-none font-black italic"
+      >
+        {digit}
+      </text>
+      {hasUnderline && <rect x="30" y="80" width="40" height="6" rx="3" />}
+    </svg>
+  )
+}
 
-export const Number1: React.FC<SymbolProps> = ({ size = '100%', ...props }) => (
-  <svg viewBox="0 0 100 100" width={size} height={size} fill="currentColor" {...props}>
-    <text
-      x="50"
-      y="54"
-      fontSize="70"
-      fontWeight="900"
-      fontFamily="system-ui, -apple-system, sans-serif"
-      textAnchor="middle"
-      dominantBaseline="middle"
-      className="select-none font-black italic"
-    >
-      1
-    </text>
-  </svg>
-)
-
-export const Number2: React.FC<SymbolProps> = ({ size = '100%', ...props }) => (
-  <svg viewBox="0 0 100 100" width={size} height={size} fill="currentColor" {...props}>
-    <text
-      x="50"
-      y="54"
-      fontSize="70"
-      fontWeight="900"
-      fontFamily="system-ui, -apple-system, sans-serif"
-      textAnchor="middle"
-      dominantBaseline="middle"
-      className="select-none font-black italic"
-    >
-      2
-    </text>
-  </svg>
-)
-
-export const Number3: React.FC<SymbolProps> = ({ size = '100%', ...props }) => (
-  <svg viewBox="0 0 100 100" width={size} height={size} fill="currentColor" {...props}>
-    <text
-      x="50"
-      y="54"
-      fontSize="70"
-      fontWeight="900"
-      fontFamily="system-ui, -apple-system, sans-serif"
-      textAnchor="middle"
-      dominantBaseline="middle"
-      className="select-none font-black italic"
-    >
-      3
-    </text>
-  </svg>
-)
-
-export const Number4: React.FC<SymbolProps> = ({ size = '100%', ...props }) => (
-  <svg viewBox="0 0 100 100" width={size} height={size} fill="currentColor" {...props}>
-    <text
-      x="50"
-      y="54"
-      fontSize="70"
-      fontWeight="900"
-      fontFamily="system-ui, -apple-system, sans-serif"
-      textAnchor="middle"
-      dominantBaseline="middle"
-      className="select-none font-black italic"
-    >
-      4
-    </text>
-  </svg>
-)
-
-export const Number5: React.FC<SymbolProps> = ({ size = '100%', ...props }) => (
-  <svg viewBox="0 0 100 100" width={size} height={size} fill="currentColor" {...props}>
-    <text
-      x="50"
-      y="54"
-      fontSize="70"
-      fontWeight="900"
-      fontFamily="system-ui, -apple-system, sans-serif"
-      textAnchor="middle"
-      dominantBaseline="middle"
-      className="select-none font-black italic"
-    >
-      5
-    </text>
-  </svg>
-)
-
-export const Number6: React.FC<SymbolProps> = ({ size = '100%', ...props }) => (
-  <svg viewBox="0 0 100 100" width={size} height={size} fill="currentColor" {...props}>
-    <text
-      x="50"
-      y="54"
-      fontSize="70"
-      fontWeight="900"
-      fontFamily="system-ui, -apple-system, sans-serif"
-      textAnchor="middle"
-      dominantBaseline="middle"
-      className="select-none font-black italic"
-    >
-      6
-    </text>
-    {/* Underline to distinguish from 9 */}
-    <rect x="30" y="80" width="40" height="6" rx="3" />
-  </svg>
-)
-
-export const Number7: React.FC<SymbolProps> = ({ size = '100%', ...props }) => (
-  <svg viewBox="0 0 100 100" width={size} height={size} fill="currentColor" {...props}>
-    <text
-      x="50"
-      y="54"
-      fontSize="70"
-      fontWeight="900"
-      fontFamily="system-ui, -apple-system, sans-serif"
-      textAnchor="middle"
-      dominantBaseline="middle"
-      className="select-none font-black italic"
-    >
-      7
-    </text>
-  </svg>
-)
-
-export const Number8: React.FC<SymbolProps> = ({ size = '100%', ...props }) => (
-  <svg viewBox="0 0 100 100" width={size} height={size} fill="currentColor" {...props}>
-    <text
-      x="50"
-      y="54"
-      fontSize="70"
-      fontWeight="900"
-      fontFamily="system-ui, -apple-system, sans-serif"
-      textAnchor="middle"
-      dominantBaseline="middle"
-      className="select-none font-black italic"
-    >
-      8
-    </text>
-  </svg>
-)
-
-export const Number9: React.FC<SymbolProps> = ({ size = '100%', ...props }) => (
-  <svg viewBox="0 0 100 100" width={size} height={size} fill="currentColor" {...props}>
-    <text
-      x="50"
-      y="54"
-      fontSize="70"
-      fontWeight="900"
-      fontFamily="system-ui, -apple-system, sans-serif"
-      textAnchor="middle"
-      dominantBaseline="middle"
-      className="select-none font-black italic"
-    >
-      9
-    </text>
-    {/* Underline to distinguish from 6 */}
-    <rect x="30" y="80" width="40" height="6" rx="3" />
-  </svg>
-)
+// Number Symbols (0-9) stable exports
+export const Number0 = createNumberSymbol('0', false)
+export const Number1 = createNumberSymbol('1', false)
+export const Number2 = createNumberSymbol('2', false)
+export const Number3 = createNumberSymbol('3', false)
+export const Number4 = createNumberSymbol('4', false)
+export const Number5 = createNumberSymbol('5', false)
+export const Number6 = createNumberSymbol('6', true)
+export const Number7 = createNumberSymbol('7', false)
+export const Number8 = createNumberSymbol('8', false)
+export const Number9 = createNumberSymbol('9', true)
 
 // Skip Symbol (Circle with diagonal slash)
 export const SkipSymbol: React.FC<SymbolProps> = ({ size = '100%', ...props }) => (
@@ -237,8 +95,7 @@ export const Draw2Symbol: React.FC<SymbolProps> = ({ size = '100%', ...props }) 
       y="52"
       fontSize="26"
       fontWeight="900"
-      fill="currentColor"
-      style={{ mixBlendMode: 'difference' }}
+      fill="white"
       textAnchor="middle"
       dominantBaseline="middle"
       className="font-sans italic"
@@ -261,8 +118,7 @@ export const Draw2Symbol: React.FC<SymbolProps> = ({ size = '100%', ...props }) 
       y="66"
       fontSize="26"
       fontWeight="900"
-      fill="currentColor"
-      style={{ mixBlendMode: 'difference' }}
+      fill="white"
       textAnchor="middle"
       dominantBaseline="middle"
       className="font-sans italic"
@@ -311,77 +167,80 @@ export const WildSymbol: React.FC<SymbolProps> = ({ size = '100%', ...props }) =
 )
 
 // Wild Draw 4 Symbol (Stacked 4-color cards vector)
-export const WildDraw4Symbol: React.FC<SymbolProps> = ({ size = '100%', ...props }) => (
-  <svg viewBox="0 0 100 100" width={size} height={size} {...props}>
-    {/* Stacked 4 cards, each with one of the four colors */}
-    {/* Card 1: Yellow */}
-    <rect
-      x="15"
-      y="15"
-      width="34"
-      height="48"
-      rx="5"
-      fill="#F59E0B"
-      stroke="white"
-      strokeWidth="3"
-      transform="rotate(-15, 32, 39)"
-    />
-    {/* Card 2: Red */}
-    <rect
-      x="28"
-      y="15"
-      width="34"
-      height="48"
-      rx="5"
-      fill="#EF4444"
-      stroke="white"
-      strokeWidth="3"
-      transform="rotate(-5, 45, 39)"
-    />
-    {/* Card 3: Green */}
-    <rect
-      x="42"
-      y="18"
-      width="34"
-      height="48"
-      rx="5"
-      fill="#10B981"
-      stroke="white"
-      strokeWidth="3"
-      transform="rotate(5, 59, 42)"
-    />
-    {/* Card 4: Blue */}
-    <rect
-      x="52"
-      y="24"
-      width="34"
-      height="48"
-      rx="5"
-      fill="#3B82F6"
-      stroke="white"
-      strokeWidth="3"
-      transform="rotate(15, 69, 48)"
-    />
+export const WildDraw4Symbol: React.FC<SymbolProps> = ({ size = '100%', ...props }) => {
+  const filterId = React.useId().replace(/:/g, '-')
+  return (
+    <svg viewBox="0 0 100 100" width={size} height={size} {...props}>
+      {/* Stacked 4 cards, each with one of the four colors */}
+      {/* Card 1: Yellow */}
+      <rect
+        x="15"
+        y="15"
+        width="34"
+        height="48"
+        rx="5"
+        fill="#F59E0B"
+        stroke="white"
+        strokeWidth="3"
+        transform="rotate(-15, 32, 39)"
+      />
+      {/* Card 2: Red */}
+      <rect
+        x="28"
+        y="15"
+        width="34"
+        height="48"
+        rx="5"
+        fill="#EF4444"
+        stroke="white"
+        strokeWidth="3"
+        transform="rotate(-5, 45, 39)"
+      />
+      {/* Card 3: Green */}
+      <rect
+        x="42"
+        y="18"
+        width="34"
+        height="48"
+        rx="5"
+        fill="#10B981"
+        stroke="white"
+        strokeWidth="3"
+        transform="rotate(5, 59, 42)"
+      />
+      {/* Card 4: Blue */}
+      <rect
+        x="52"
+        y="24"
+        width="34"
+        height="48"
+        rx="5"
+        fill="#3B82F6"
+        stroke="white"
+        strokeWidth="3"
+        transform="rotate(15, 69, 48)"
+      />
 
-    {/* Center Text overlaying the stack */}
-    <filter id="shadow">
-      <feDropShadow dx="2" dy="2" stdDeviation="1.5" floodOpacity="0.5" />
-    </filter>
-    <text
-      x="50"
-      y="76"
-      fontSize="30"
-      fontWeight="900"
-      fontFamily="system-ui, -apple-system, sans-serif"
-      fill="white"
-      stroke="#1E293B"
-      strokeWidth="2"
-      textAnchor="middle"
-      dominantBaseline="middle"
-      className="font-black italic select-none"
-      filter="url(#shadow)"
-    >
-      +4
-    </text>
-  </svg>
-)
+      {/* Center Text overlaying the stack */}
+      <filter id={filterId}>
+        <feDropShadow dx="2" dy="2" stdDeviation="1.5" floodOpacity="0.5" />
+      </filter>
+      <text
+        x="50"
+        y="76"
+        fontSize="30"
+        fontWeight="900"
+        fontFamily="system-ui, -apple-system, sans-serif"
+        fill="white"
+        stroke="#1E293B"
+        strokeWidth="2"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        className="font-black italic select-none"
+        filter={`url(#${filterId})`}
+      >
+        +4
+      </text>
+    </svg>
+  )
+}

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { RotateCcw, Bot, User, Award, Volume2, VolumeX, Info } from 'lucide-react'
 import { UnoCardUI, type CardColorType } from './UnoCardUI'
-import { type UnoGameState, type UnoCard, type CardColor } from '../engine/unoEngine'
+import { type UnoGameState, type UnoCard, type CardColor, type Player } from '../engine/unoEngine'
 
 interface BoardProps {
   gameState: UnoGameState
@@ -17,6 +17,7 @@ interface BoardProps {
   handleChooseColor: (color: CardColor) => void
   handleInitGame: () => void
   isValidPlay: (card: UnoCard) => boolean
+  handleQuitMatch?: () => void
 }
 
 // Mobile haptic feedback helper placeholder
@@ -28,6 +29,75 @@ const triggerHaptic = (type: 'light' | 'medium' | 'success') => {
   } else {
     console.log(`[Haptic Feedback Placeholder] Triggered ${type} haptic buzz`)
   }
+}
+
+// Reusable OpponentPanel component to avoid duplication
+interface OpponentPanelProps {
+  player: Player
+  avatarColor: string
+  isActive: boolean
+  isUnoCalled: boolean
+  onChallenge: (playerId: string) => void
+  className?: string
+  layoutType?: 'row' | 'col'
+}
+
+const OpponentPanel: React.FC<OpponentPanelProps> = ({
+  player,
+  avatarColor,
+  isActive,
+  isUnoCalled,
+  onChallenge,
+  className = '',
+  layoutType = 'col',
+}) => {
+  const containerClasses = `flex rounded-2xl border transition-all duration-300 p-2.5 items-center ${
+    isActive
+      ? 'bg-amber-500/20 border-amber-500 shadow-lg scale-105 ring-2 ring-amber-500/30'
+      : 'bg-slate-900/60 border-slate-800'
+  } ${className} ${layoutType === 'col' ? 'flex-col' : 'gap-2.5'}`
+
+  return (
+    <div className={containerClasses}>
+      <div
+        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${avatarColor} flex items-center justify-center text-white font-bold text-xs sm:text-sm shadow`}
+      >
+        <Bot size={14} />
+      </div>
+      <div className={layoutType === 'col' ? 'text-center' : ''}>
+        <div className="flex items-center gap-1 justify-center">
+          <span className="text-[10px] sm:text-xs font-bold max-w-[65px] truncate">
+            {player.name}
+          </span>
+          {isUnoCalled && (
+            <motion.span
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="px-1 py-0.5 bg-red-600 text-[8px] font-black tracking-tighter uppercase rounded text-white animate-pulse"
+            >
+              UNO!
+            </motion.span>
+          )}
+        </div>
+        <div className="flex flex-col sm:flex-row items-center gap-1 justify-center mt-0.5">
+          <span className="text-[10px] text-slate-400 font-semibold">
+            {player.hand.length} card{player.hand.length !== 1 ? 's' : ''}
+          </span>
+          {player.hand.length === 1 && !isUnoCalled && (
+            <button
+              onClick={() => {
+                triggerHaptic('medium')
+                onChallenge(player.id)
+              }}
+              className="px-1.5 py-0.5 bg-red-500/20 hover:bg-red-500 border border-red-500 text-[8px] font-bold uppercase rounded text-red-200 hover:text-white transition-all sm:ml-1.5 animate-bounce mt-1 sm:mt-0"
+            >
+              Challenge
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export const Board: React.FC<BoardProps> = ({
@@ -43,27 +113,78 @@ export const Board: React.FC<BoardProps> = ({
   handleChooseColor,
   handleInitGame,
   isValidPlay,
+  handleQuitMatch,
 }) => {
-  const myPlayer = gameState.players[0]
-  const slickBot = gameState.players[1]
-  const chippyBot = gameState.players[2]
-  const smartyBot = gameState.players[3]
+  // Safe guard: Derive the required player objects from the array instead of relying on fixed indices.
+  const myPlayer = gameState.players.find((p) => p.id === 'player-0') || gameState.players[0]
+
+  // Exclude player-0 to gather opponent bots dynamically
+  const opponentBots = gameState.players.filter((p) => p.id !== 'player-0')
+
+  // Derive chippy, slick, and smarty safely or fallback
+  const slickBot = opponentBots[0] || { id: 'bot-1', name: 'Slick Bot', hand: [] }
+  const chippyBot = opponentBots[1] || { id: 'bot-2', name: 'Chippy Bot', hand: [] }
+  const smartyBot = opponentBots[2] || { id: 'bot-3', name: 'Smarty Bot', hand: [] }
+
   const isMyTurn = gameState.currentPlayerIndex === 0
-  const topCard = gameState.discardPile[gameState.discardPile.length - 1]
+  const topCard =
+    gameState.discardPile.length > 0
+      ? gameState.discardPile[gameState.discardPile.length - 1]
+      : null
+
+  // Local state to track drag vs tap events
+  const dragActiveRef = useRef(false)
 
   // Control modal open state derived from parent gameState & turn
   const isWildModalOpen = !!(gameState.selectedWildCard && isMyTurn)
 
   // Simple tracking for dealt animations to avoid re-triggering constantly after initial build
   const [hasDealt, setHasDealt] = useState(false)
+
   useEffect(() => {
-    if (gameState.status === 'PLAYING' && !hasDealt) {
-      const timer = setTimeout(() => {
-        setHasDealt(true)
-      }, 1200)
-      return () => clearTimeout(timer)
+    if (gameState.status === 'PLAYING') {
+      if (!hasDealt) {
+        const timer = setTimeout(() => {
+          setHasDealt(true)
+        }, 1200)
+        return () => clearTimeout(timer)
+      }
+    } else {
+      // Reset hasDealt when no longer playing
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setHasDealt(false)
     }
   }, [gameState.status, hasDealt])
+
+  // Fallback UI if required player data is incomplete
+  if (!myPlayer || opponentBots.length < 3) {
+    return (
+      <div className="mobile-viewport flex flex-col items-center justify-center p-6 bg-slate-950 text-white">
+        <p className="text-sm font-semibold text-slate-400 mb-4">Setting up game board...</p>
+        <button
+          onClick={handleInitGame}
+          className="py-2.5 px-6 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition-colors"
+        >
+          Initialize Match
+        </button>
+      </div>
+    )
+  }
+
+  // Fallback if discard pile is empty
+  if (!topCard) {
+    return (
+      <div className="mobile-viewport flex flex-col items-center justify-center p-6 bg-slate-950 text-white">
+        <p className="text-sm font-semibold text-slate-400 mb-4">No cards in discard pile.</p>
+        <button
+          onClick={handleInitGame}
+          className="py-2.5 px-6 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition-colors"
+        >
+          Restart Match
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="mobile-viewport select-none flex flex-col justify-between bg-slate-950 text-white overflow-hidden relative">
@@ -71,7 +192,9 @@ export const Board: React.FC<BoardProps> = ({
       <div className="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800 shrink-0 z-20">
         <button
           onClick={() => {
-            if (confirm('Are you sure you want to quit the current match?')) {
+            if (handleQuitMatch) {
+              handleQuitMatch()
+            } else {
               window.location.reload()
             }
           }}
@@ -105,47 +228,14 @@ export const Board: React.FC<BoardProps> = ({
 
       {/* 2. Top Opponent (Bot 2 - Chippy) */}
       <div className="flex justify-center py-2 bg-slate-900/30 border-b border-slate-900/80 shrink-0 relative z-20">
-        <div
-          className={`flex items-center gap-2.5 px-4 py-1.5 rounded-full border transition-all duration-300 ${
-            gameState.currentPlayerIndex === 2
-              ? 'bg-amber-500/20 border-amber-500 shadow-lg shadow-amber-500/10 scale-105 ring-2 ring-amber-500/30'
-              : 'bg-slate-900/80 border-slate-800'
-          }`}
-        >
-          <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow">
-            <Bot size={14} />
-          </div>
-          <div>
-            <div className="flex items-center gap-1">
-              <span className="text-xs font-bold">{chippyBot.name}</span>
-              {gameState.unoCalls[chippyBot.id] && (
-                <motion.span
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="px-1 py-0.5 bg-red-600 text-[8px] font-black tracking-tighter uppercase rounded text-white animate-pulse"
-                >
-                  UNO!
-                </motion.span>
-              )}
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-[10px] text-slate-400 font-semibold">
-                {chippyBot.hand.length} cards
-              </span>
-              {chippyBot.hand.length === 1 && !gameState.unoCalls[chippyBot.id] && (
-                <button
-                  onClick={() => {
-                    triggerHaptic('medium')
-                    handleChallenge(chippyBot.id)
-                  }}
-                  className="px-1.5 py-0.5 bg-red-500/20 hover:bg-red-500 border border-red-500 text-[8px] font-bold uppercase rounded text-red-200 hover:text-white transition-all ml-1.5 animate-bounce"
-                >
-                  Challenge
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+        <OpponentPanel
+          player={chippyBot as Player}
+          avatarColor="bg-indigo-600"
+          isActive={gameState.currentPlayerIndex === 2}
+          isUnoCalled={!!gameState.unoCalls[chippyBot.id]}
+          onChallenge={handleChallenge}
+          layoutType="row"
+        />
 
         {/* Dynamic Direction Indicator Widget with continuous rotating animation */}
         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 px-2 py-1 rounded-md">
@@ -171,72 +261,26 @@ export const Board: React.FC<BoardProps> = ({
       <div className="flex-1 flex flex-col justify-between p-4 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
         {/* Left Opponent (Bot 1 - Slick) */}
         <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
-          <div
-            className={`flex flex-col items-center p-2.5 rounded-2xl border transition-all duration-300 ${
-              gameState.currentPlayerIndex === 1
-                ? 'bg-amber-500/20 border-amber-500 shadow-lg scale-105 ring-2 ring-amber-500/30'
-                : 'bg-slate-900/60 border-slate-800'
-            }`}
-          >
-            <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow mb-1">
-              <Bot size={16} />
-            </div>
-            <span className="text-[10px] font-bold max-w-[60px] truncate text-center">
-              {slickBot.name}
-            </span>
-            <span className="text-xs font-black text-slate-400">{slickBot.hand.length} C</span>
-            {gameState.unoCalls[slickBot.id] && (
-              <span className="px-1 py-0.5 bg-red-600 text-[8px] font-black uppercase rounded mt-1 animate-pulse">
-                UNO!
-              </span>
-            )}
-            {slickBot.hand.length === 1 && !gameState.unoCalls[slickBot.id] && (
-              <button
-                onClick={() => {
-                  triggerHaptic('medium')
-                  handleChallenge(slickBot.id)
-                }}
-                className="px-1.5 py-0.5 bg-red-500/20 hover:bg-red-500 border border-red-500 text-[8px] font-bold uppercase rounded text-red-200 hover:text-white transition-all mt-1.5"
-              >
-                Call out
-              </button>
-            )}
-          </div>
+          <OpponentPanel
+            player={slickBot as Player}
+            avatarColor="bg-emerald-600"
+            isActive={gameState.currentPlayerIndex === 1}
+            isUnoCalled={!!gameState.unoCalls[slickBot.id]}
+            onChallenge={handleChallenge}
+            layoutType="col"
+          />
         </div>
 
         {/* Right Opponent (Bot 3 - Smarty) */}
         <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
-          <div
-            className={`flex flex-col items-center p-2.5 rounded-2xl border transition-all duration-300 ${
-              gameState.currentPlayerIndex === 3
-                ? 'bg-amber-500/20 border-amber-500 shadow-lg scale-105 ring-2 ring-amber-500/30'
-                : 'bg-slate-900/60 border-slate-800'
-            }`}
-          >
-            <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold text-sm shadow mb-1">
-              <Bot size={16} />
-            </div>
-            <span className="text-[10px] font-bold max-w-[60px] truncate text-center">
-              {smartyBot.name}
-            </span>
-            <span className="text-xs font-black text-slate-400">{smartyBot.hand.length} C</span>
-            {gameState.unoCalls[smartyBot.id] && (
-              <span className="px-1 py-0.5 bg-red-600 text-[8px] font-black uppercase rounded mt-1 animate-pulse">
-                UNO!
-              </span>
-            )}
-            {smartyBot.hand.length === 1 && !gameState.unoCalls[smartyBot.id] && (
-              <button
-                onClick={() => {
-                  triggerHaptic('medium')
-                  handleChallenge(smartyBot.id)
-                }}
-                className="px-1.5 py-0.5 bg-red-500/20 hover:bg-red-500 border border-red-500 text-[8px] font-bold uppercase rounded text-red-200 hover:text-white transition-all mt-1.5"
-              >
-                Call out
-              </button>
-            )}
-          </div>
+          <OpponentPanel
+            player={smartyBot as Player}
+            avatarColor="bg-purple-600"
+            isActive={gameState.currentPlayerIndex === 3}
+            isUnoCalled={!!gameState.unoCalls[smartyBot.id]}
+            onChallenge={handleChallenge}
+            layoutType="col"
+          />
         </div>
 
         {/* Action Log Announcement Banner */}
@@ -354,14 +398,14 @@ export const Board: React.FC<BoardProps> = ({
         </div>
       </div>
 
-      {/* 4. Color Picker Modal overlay */}
+      {/* 4. Color Picker Modal overlay with z-50 */}
       <AnimatePresence>
         {isWildModalOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end z-45"
+            className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end z-50"
           >
             <motion.div
               initial={{ y: '100%' }}
@@ -492,10 +536,12 @@ export const Board: React.FC<BoardProps> = ({
                   dragElastic={0.4}
                   dragConstraints={{ left: 0, right: 0, top: -200, bottom: 50 }}
                   onDragStart={() => {
+                    dragActiveRef.current = false
                     triggerHaptic('light')
                   }}
                   onDragEnd={(_, info) => {
                     if (info.offset.y < -80) {
+                      dragActiveRef.current = true
                       triggerHaptic('success')
                       handlePlayCard(card.id)
                     }
@@ -506,6 +552,10 @@ export const Board: React.FC<BoardProps> = ({
                     card={card as unknown as { id: string; color: CardColorType; value: string }}
                     isPlayable={cardPlayable}
                     onClick={() => {
+                      if (dragActiveRef.current) {
+                        dragActiveRef.current = false
+                        return
+                      }
                       triggerHaptic('success')
                       handlePlayCard(card.id)
                     }}
