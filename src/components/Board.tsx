@@ -544,6 +544,9 @@ export const Board: React.FC<BoardProps> = ({
                       dragActiveRef.current = true
                       triggerHaptic('success')
                       handlePlayCard(card.id)
+                      setTimeout(() => {
+                        dragActiveRef.current = false
+                      }, 300)
                     }
                   }}
                   className="flex-shrink-0 cursor-grab active:cursor-grabbing"
