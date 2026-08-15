@@ -226,6 +226,17 @@ export const Board: React.FC<BoardProps> = ({
               >
                 <Info size={16} />
               </button>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={isMuted ? 0 : volume}
+                onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                className="w-12 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                title="Volume"
+                aria-label="Volume"
+              />
               <button
                 onClick={toggleMute}
                 className="p-1 rounded-lg bg-blue-900/60 border border-cyan-400/40 text-cyan-300 hover:text-white transition-colors"
@@ -332,7 +343,8 @@ export const Board: React.FC<BoardProps> = ({
               </motion.div>
             </div>
             <span className="text-[9px] font-black text-cyan-300 uppercase tracking-widest mt-1.5 drop-shadow-[0_0_6px_rgba(6,182,212,0.8)]">
-              TURN DIRECTION: {gameState.direction === 'clockwise' ? 'CLOCKWISE' : 'COUNTER-CLOCKWISE'}
+              TURN DIRECTION:{' '}
+              {gameState.direction === 'clockwise' ? 'CLOCKWISE' : 'COUNTER-CLOCKWISE'}
             </span>
           </div>
 
@@ -405,9 +417,7 @@ export const Board: React.FC<BoardProps> = ({
                   handleDrawCard()
                 }}
                 disabled={!isMyTurn || gameState.selectedWildCard !== null}
-                whileHover={
-                  isMyTurn && gameState.selectedWildCard === null ? { scale: 1.05 } : {}
-                }
+                whileHover={isMyTurn && gameState.selectedWildCard === null ? { scale: 1.05 } : {}}
                 whileTap={isMyTurn && gameState.selectedWildCard === null ? { scale: 0.95 } : {}}
                 className={`w-16 h-24 sm:w-20 sm:h-28 rounded-xl border-2 border-cyan-400 bg-slate-900 flex flex-col items-center justify-center relative shadow-[0_0_18px_rgba(6,182,212,0.5)] transition-all ${
                   isMyTurn && gameState.selectedWildCard === null

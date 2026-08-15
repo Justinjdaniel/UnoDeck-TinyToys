@@ -96,13 +96,7 @@ export const ParticleBackground: React.FC = () => {
           p.y += p.vy
           p.alpha -= p.decay
 
-          if (
-            p.alpha <= 0 ||
-            p.x < 0 ||
-            p.x > logicalWidth ||
-            p.y < 0 ||
-            p.y > logicalHeight
-          ) {
+          if (p.alpha <= 0 || p.x < 0 || p.x > logicalWidth || p.y < 0 || p.y > logicalHeight) {
             particles[idx] = createParticle(logicalWidth, logicalHeight)
           }
         }

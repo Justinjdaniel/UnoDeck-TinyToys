@@ -7,7 +7,11 @@ body {
   padding: 0;
   background-color: #030712;
   color: #f8fafc;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    sans-serif;
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
@@ -56,13 +60,7 @@ body {
 
 /* Metallic Blue Header Bar */
 .metallic-header {
-  background: linear-gradient(
-    180deg,
-    #1e3a8a 0%,
-    #1d4ed8 25%,
-    #1e40af 50%,
-    #172554 100%
-  );
+  background: linear-gradient(180deg, #1e3a8a 0%, #1d4ed8 25%, #1e40af 50%, #172554 100%);
   border-bottom: 2px solid #38bdf8;
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.8),
@@ -83,7 +81,8 @@ body {
 }
 
 @keyframes pulseCue {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.85;
     transform: scale(1);
     filter: drop-shadow(0 0 2px #38bdf8);
