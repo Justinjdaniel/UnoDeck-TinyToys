@@ -21,14 +21,8 @@ export const ParticleBackground: React.FC = () => {
     if (!ctx) return
 
     let animationFrameId: number
-
-    const handleResize = () => {
-      canvas.width = canvas.parentElement?.clientWidth || window.innerWidth
-      canvas.height = canvas.parentElement?.clientHeight || window.innerHeight
-    }
-
-    handleResize()
-    window.addEventListener('resize', handleResize)
+    let logicalWidth = 0
+    let logicalHeight = 0
 
     const colors = [
       '#3b82f6', // blue
@@ -43,9 +37,9 @@ export const ParticleBackground: React.FC = () => {
     const particles: Particle[] = []
     const maxParticles = 40
 
-    const createParticle = (): Particle => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
+    const createParticle = (w: number, h: number): Particle => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
       radius: Math.random() * 3 + 1,
       color: colors[Math.floor(Math.random() * colors.length)],
       vx: (Math.random() - 0.5) * 0.6,
@@ -54,20 +48,63 @@ export const ParticleBackground: React.FC = () => {
       decay: Math.random() * 0.005 + 0.002,
     })
 
-    for (let i = 0; i < maxParticles; i++) {
-      particles.push(createParticle())
+    const updateDimensions = () => {
+      const parent = canvas.parentElement
+      logicalWidth = parent?.clientWidth || window.innerWidth
+      logicalHeight = parent?.clientHeight || window.innerHeight
+
+      const dpr = window.devicePixelRatio || 1
+      canvas.width = Math.floor(logicalWidth * dpr)
+      canvas.height = Math.floor(logicalHeight * dpr)
+      canvas.style.width = `${logicalWidth}px`
+      canvas.style.height = `${logicalHeight}px`
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+
+      if (particles.length === 0) {
+        for (let i = 0; i < maxParticles; i++) {
+          particles.push(createParticle(logicalWidth, logicalHeight))
+        }
+      }
     }
 
+    updateDimensions()
+
+    let resizeObserver: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined' && canvas.parentElement) {
+      resizeObserver = new ResizeObserver(() => {
+        updateDimensions()
+      })
+      resizeObserver.observe(canvas.parentElement)
+    }
+
+    const handleWindowResize = () => {
+      updateDimensions()
+    }
+    window.addEventListener('resize', handleWindowResize)
+
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+
     const render = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.clearRect(0, 0, logicalWidth, logicalHeight)
+
+      const isReducedMotion = reducedMotionQuery.matches
 
       particles.forEach((p, idx) => {
-        p.x += p.vx
-        p.y += p.vy
-        p.alpha -= p.decay
+        if (!isReducedMotion) {
+          p.x += p.vx
+          p.y += p.vy
+          p.alpha -= p.decay
 
-        if (p.alpha <= 0 || p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
-          particles[idx] = createParticle()
+          if (
+            p.alpha <= 0 ||
+            p.x < 0 ||
+            p.x > logicalWidth ||
+            p.y < 0 ||
+            p.y > logicalHeight
+          ) {
+            particles[idx] = createParticle(logicalWidth, logicalHeight)
+          }
         }
 
         ctx.save()
@@ -81,14 +118,17 @@ export const ParticleBackground: React.FC = () => {
         ctx.restore()
       })
 
-      animationFrameId = requestAnimationFrame(render)
+      if (!isReducedMotion) {
+        animationFrameId = requestAnimationFrame(render)
+      }
     }
 
     render()
 
     return () => {
-      window.removeEventListener('resize', handleResize)
-      cancelAnimationFrame(animationFrameId)
+      if (resizeObserver) resizeObserver.disconnect()
+      window.removeEventListener('resize', handleWindowResize)
+      if (animationFrameId) cancelAnimationFrame(animationFrameId)
     }
   }, [])
 

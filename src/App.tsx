@@ -255,7 +255,9 @@ export default function App() {
             Neon Arena Uno
           </h2>
           <p className="text-slate-300 text-xs max-w-xs mb-6 font-semibold">
-            Experience hyper-gamified neon UNO with PixelPilot vs AstroBot v2 in Arena 3.
+            {selectedMode === 'VS_BOT'
+              ? 'Experience hyper-gamified neon UNO with PixelPilot vs AstroBot v2 in Arena 3.'
+              : 'Experience hyper-gamified neon UNO with PixelPilot vs Player 2 in local Pass & Play.'}
           </p>
 
           {/* Game Mode Switcher Control */}

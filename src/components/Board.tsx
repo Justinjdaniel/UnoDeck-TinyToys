@@ -15,7 +15,7 @@ import {
   ShieldAlert,
 } from 'lucide-react'
 import { UnoCardUI, type CardColorType } from './UnoCardUI'
-import { type UnoGameState, type UnoCard, type CardColor, type Player } from '../engine/unoEngine'
+import { type UnoGameState, type UnoCard, type CardColor } from '../engine/unoEngine'
 import { soundManager } from '../utils/soundManager'
 import { ParticleBackground } from './ParticleBackground'
 
@@ -194,7 +194,7 @@ export const Board: React.FC<BoardProps> = ({
         inert={showPassOverlay ? true : undefined}
         className="w-full h-full flex flex-col justify-between relative z-10 neon-frame"
       >
-        {/* 1. TOP HEADER: Metallic Blue Bar with Lv. 14, 5000 Coins, 50 Gems & Title "VS BOT (AI) - Arena 3" */}
+        {/* 1. TOP HEADER: Metallic Blue Bar with Lv. 14, 5000 Coins, 50 Gems & Dynamic Title */}
         <div className="metallic-header px-3 py-2.5 shrink-0 z-30 flex flex-col gap-1.5 shadow-xl">
           <div className="flex items-center justify-between">
             {/* Level & Resource Counters */}
@@ -248,12 +248,12 @@ export const Board: React.FC<BoardProps> = ({
           {/* Arena Title */}
           <div className="text-center">
             <h2 className="text-xs font-black uppercase tracking-widest text-cyan-200 drop-shadow-[0_0_6px_rgba(56,189,248,0.8)]">
-              VS BOT (AI) - Arena 3
+              {gameState.mode === 'VS_BOT' ? 'VS BOT (AI) - Arena 3' : 'LOCAL PASS & PLAY'}
             </h2>
           </div>
         </div>
 
-        {/* 2. BOT PROFILE HEADER (AstroBot v2) */}
+        {/* 2. BOT/OPPONENT PROFILE HEADER */}
         <div className="flex justify-between items-center px-4 py-2 bg-slate-950/60 border-b border-cyan-500/20 shrink-0 relative z-20">
           <div className="flex items-center gap-2">
             <div
@@ -264,17 +264,19 @@ export const Board: React.FC<BoardProps> = ({
               }`}
             >
               <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center text-cyan-300">
-                <Bot size={18} />
+                {botPlayer.isBot ? <Bot size={18} /> : <User size={18} />}
               </div>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-black text-cyan-300 tracking-wide">
-                  AstroBot v2
+                  {botPlayer.name}
                 </span>
-                <span className="px-1 py-0.2 bg-cyan-950 border border-cyan-500/40 text-[8px] font-bold text-cyan-400 rounded">
-                  AI
-                </span>
+                {botPlayer.isBot && (
+                  <span className="px-1 py-0.5 bg-cyan-950 border border-cyan-500/40 text-[8px] font-bold text-cyan-400 rounded">
+                    AI
+                  </span>
+                )}
               </div>
               <span className="text-[10px] font-bold text-slate-400">
                 {botPlayer.hand.length} card{botPlayer.hand.length !== 1 ? 's' : ''} left
@@ -334,7 +336,7 @@ export const Board: React.FC<BoardProps> = ({
             </span>
           </div>
 
-          {/* Card Piles Interaction Section (Left: Discard Blue 7 / Top card, Right: Draw Pile) */}
+          {/* Card Piles Interaction Section */}
           <div className="flex items-center justify-center gap-6 my-auto z-10 relative">
             {/* Left Discard Pile */}
             <div className="flex flex-col items-center">
@@ -392,7 +394,6 @@ export const Board: React.FC<BoardProps> = ({
 
             {/* Right Draw Stack with Sound Cues [SWOOSH] & [WHOOSH] */}
             <div className="flex flex-col items-center relative">
-              {/* Permanent / Animated Sound Text Cues: [SWOOSH] and [WHOOSH] */}
               <div className="absolute -top-6 left-1/2 -translate-x-1/2 flex items-center gap-2 pointer-events-none whitespace-nowrap z-20">
                 <span className="sound-text-cue text-[10px] tracking-widest">[SWOOSH]</span>
                 <span className="sound-text-cue text-[10px] tracking-widest">[WHOOSH]</span>
@@ -446,7 +447,7 @@ export const Board: React.FC<BoardProps> = ({
               )
             ) : (
               <span className="text-xs font-bold text-slate-400">
-                AstroBot v2 is thinking...
+                {activePlayer.name} {activePlayer.isBot ? 'is thinking...' : 'is playing...'}
               </span>
             )}
           </div>
@@ -501,11 +502,11 @@ export const Board: React.FC<BoardProps> = ({
           )}
         </AnimatePresence>
 
-        {/* 5. BOTTOM PLAYER PROFILE & FAN HAND PANEL (PixelPilot) */}
+        {/* 5. BOTTOM PLAYER PROFILE & FAN HAND PANEL */}
         <div className="bg-slate-950/90 border-t-2 border-cyan-500/40 p-3 shrink-0 relative z-20">
           {/* Player Profile & UNO Button Section */}
           <div className="flex items-center justify-between mb-2">
-            {/* PixelPilot Player Profile with Rocket Icon */}
+            {/* Player Profile with Rocket Icon */}
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 p-0.5 shadow-[0_0_10px_rgba(6,182,212,0.8)]">
                 <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center text-cyan-300">
@@ -516,9 +517,9 @@ export const Board: React.FC<BoardProps> = ({
               <div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-black text-cyan-300 tracking-wide">
-                    PixelPilot
+                    {myPlayer.name}
                   </span>
-                  <span className="px-1 py-0.2 bg-indigo-950 border border-indigo-400/40 text-[8px] font-bold text-indigo-300 rounded">
+                  <span className="px-1 py-0.5 bg-indigo-950 border border-indigo-400/40 text-[8px] font-bold text-indigo-300 rounded">
                     YOU
                   </span>
                 </div>
@@ -528,7 +529,7 @@ export const Board: React.FC<BoardProps> = ({
               </div>
             </div>
 
-            {/* Rounded Rectangle [UNO!] Button matching Reference Design */}
+            {/* Rounded Rectangle [UNO!] Button */}
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {
@@ -552,7 +553,7 @@ export const Board: React.FC<BoardProps> = ({
             </div>
           </div>
 
-          {/* Permanent / Animated Sound Text Cue: [TAP] near player hand */}
+          {/* Sound Text Cue [TAP] */}
           <div className="flex justify-start items-center mb-1 pl-1">
             <span className="sound-text-cue text-[10px] tracking-widest">[TAP]</span>
             <span className="text-[9px] text-slate-400 font-semibold ml-2">
@@ -560,7 +561,7 @@ export const Board: React.FC<BoardProps> = ({
             </span>
           </div>
 
-          {/* Player's Fanned Hand with glowing color outlines */}
+          {/* Player's Fanned Hand */}
           <div className="flex gap-2 overflow-x-auto py-2 px-1 no-scrollbar min-h-[115px] items-center">
             <AnimatePresence mode="popLayout">
               {myPlayer.hand.map((card, index) => {

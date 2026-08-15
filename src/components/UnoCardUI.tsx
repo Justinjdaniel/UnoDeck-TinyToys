@@ -158,7 +158,7 @@ export const UnoCardUI: React.FC<UnoCardUIProps> = ({
         isPlayable && !disabled
           ? 'hover:-translate-y-3 hover:scale-105 active:scale-95 shadow-lg border-white cursor-pointer ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-950 focus:outline-none focus:ring-4 animate-pulse'
           : disabled || !isPlayable
-            ? 'opacity-85'
+            ? 'opacity-[0.85]'
             : ''
       } ${className}`}
       style={style}
