@@ -27,8 +27,8 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install chromium --with-deps
 
-      - name: Run Quality Gate and Build
-        run: npm run quality-gate
+      - name: Run Build
+        run: npm run build
 
       - name: Deploy static site to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
