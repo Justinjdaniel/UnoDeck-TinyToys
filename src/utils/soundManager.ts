@@ -5,6 +5,7 @@ const VOLUME_STORAGE_KEY = 'unodeck_sound_volume'
 
 export class SoundManager {
   private ctx: AudioContext | null = null
+  private masterGain: GainNode | null = null
   private muted: boolean = false
   private volume: number = 0.8
 
@@ -13,8 +14,8 @@ export class SoundManager {
   }
 
   private loadSettings() {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      try {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
         const savedMute = localStorage.getItem(MUTE_STORAGE_KEY)
         if (savedMute !== null) {
           this.muted = savedMute === 'true'
@@ -27,25 +28,26 @@ export class SoundManager {
             this.volume = parsed
           }
         }
-      } catch (e) {
-        console.warn('Unable to load sound settings from localStorage', e)
       }
+    } catch (e) {
+      console.warn('Unable to load sound settings from localStorage', e)
     }
   }
 
   private saveSettings() {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      try {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.setItem(MUTE_STORAGE_KEY, String(this.muted))
         localStorage.setItem(VOLUME_STORAGE_KEY, String(this.volume))
-      } catch (e) {
-        console.warn('Unable to save sound settings to localStorage', e)
       }
+    } catch (e) {
+      console.warn('Unable to save sound settings to localStorage', e)
     }
   }
 
   /**
    * Preload / Initialize Web Audio API AudioContext.
+   * Creates and retains master GainNode connected to AudioContext destination.
    * Resolves suspended state on user interaction for zero latency on touch interactions.
    */
   public init() {
@@ -56,6 +58,9 @@ export class SoundManager {
         (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
       if (AudioCtxClass) {
         this.ctx = new AudioCtxClass()
+        this.masterGain = this.ctx.createGain()
+        this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime)
+        this.masterGain.connect(this.ctx.destination)
       }
     }
 
@@ -83,6 +88,9 @@ export class SoundManager {
   public setVolume(volume: number) {
     this.volume = Math.max(0, Math.min(1, volume))
     this.saveSettings()
+    if (this.ctx && this.masterGain) {
+      this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime)
+    }
   }
 
   public getVolume(): number {
@@ -96,34 +104,31 @@ export class SoundManager {
     if (this.muted || this.volume <= 0) return
 
     this.init()
-    if (!this.ctx) return
+    if (!this.ctx || !this.masterGain) return
 
     const now = this.ctx.currentTime
-    const masterGain = this.ctx.createGain()
-    masterGain.gain.setValueAtTime(this.volume, now)
-    masterGain.connect(this.ctx.destination)
 
     switch (sound) {
       case 'shuffle':
-        this.playShuffle(masterGain, now)
+        this.playShuffle(this.masterGain, now)
         break
       case 'draw':
-        this.playDraw(masterGain, now)
+        this.playDraw(this.masterGain, now)
         break
       case 'place':
-        this.playPlace(masterGain, now)
+        this.playPlace(this.masterGain, now)
         break
       case 'click':
-        this.playClick(masterGain, now)
+        this.playClick(this.masterGain, now)
         break
       case 'uno':
-        this.playUno(masterGain, now)
+        this.playUno(this.masterGain, now)
         break
       case 'win':
-        this.playWin(masterGain, now)
+        this.playWin(this.masterGain, now)
         break
       case 'lose':
-        this.playLose(masterGain, now)
+        this.playLose(this.masterGain, now)
         break
     }
   }

@@ -22,6 +22,8 @@ class MockOscillatorNode {
   stop = vi.fn()
 }
 
+let mockAudioContextInstance: MockAudioContext | null = null
+
 class MockAudioContext {
   currentTime = 0
   state = 'running'
@@ -29,11 +31,17 @@ class MockAudioContext {
   resume = vi.fn().mockResolvedValue(undefined)
   createGain = vi.fn().mockImplementation(() => new MockGainNode())
   createOscillator = vi.fn().mockImplementation(() => new MockOscillatorNode())
+
+  constructor() {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    mockAudioContextInstance = this
+  }
 }
 
 describe('SoundManager', () => {
   beforeEach(() => {
     localStorage.clear()
+    mockAudioContextInstance = null
     vi.stubGlobal('AudioContext', MockAudioContext)
   })
 
@@ -77,20 +85,28 @@ describe('SoundManager', () => {
     expect(sm2.getVolume()).toBe(0)
   })
 
-  it('does not play sound when muted', () => {
+  it('does not play sound or create new sound nodes when muted', () => {
     const sm = new SoundManager()
-    sm.setMuted(true)
     sm.init()
+    expect(mockAudioContextInstance).not.toBeNull()
+    const createOscillatorSpy = mockAudioContextInstance?.createOscillator
+
+    sm.setMuted(true)
     sm.play('click')
-    // Since init wasn't called inside play due to early return, ctx will not trigger createGain
+
+    expect(createOscillatorSpy).not.toHaveBeenCalled()
   })
 
-  it('plays all sound effects without throwing errors', () => {
+  it('plays all sound effects without throwing errors and creates oscillators for each', () => {
     const sm = new SoundManager()
+    sm.init()
     const sounds = ['shuffle', 'draw', 'place', 'click', 'uno', 'win', 'lose'] as const
 
     sounds.forEach((sound) => {
+      const oscCallsBefore = mockAudioContextInstance?.createOscillator.mock.calls.length || 0
       expect(() => sm.play(sound)).not.toThrow()
+      const oscCallsAfter = mockAudioContextInstance?.createOscillator.mock.calls.length || 0
+      expect(oscCallsAfter).toBeGreaterThan(oscCallsBefore)
     })
   })
 })

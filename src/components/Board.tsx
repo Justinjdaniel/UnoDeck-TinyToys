@@ -133,16 +133,24 @@ export const Board: React.FC<BoardProps> = ({
 
   const dragActiveRef = useRef(false)
   const isWildModalOpen = !!(gameState.selectedWildCard && isMyTurn)
+
+  // Derive hasDealt during render or update via timer callback
   const [hasDealt, setHasDealt] = useState(false)
+  const isPlaying = gameState.status === 'PLAYING'
 
   useEffect(() => {
-    if (gameState.status === 'PLAYING' && !hasDealt) {
+    if (isPlaying) {
       const timer = setTimeout(() => {
         setHasDealt(true)
       }, 1200)
       return () => clearTimeout(timer)
+    } else {
+      const timer = setTimeout(() => {
+        setHasDealt(false)
+      }, 0)
+      return () => clearTimeout(timer)
     }
-  }, [gameState.status, hasDealt])
+  }, [isPlaying])
 
   if (!myPlayer || opponentBots.length < 3) {
     return (
@@ -206,6 +214,7 @@ export const Board: React.FC<BoardProps> = ({
             onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
             className="w-14 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
             title="Volume"
+            aria-label="Volume"
           />
           <button
             onClick={() => {
@@ -321,7 +330,7 @@ export const Board: React.FC<BoardProps> = ({
             )}
           </motion.button>
 
-          {/* Discard Pile with Animation Sound Callback */}
+          {/* Discard Pile */}
           <div className="relative">
             <AnimatePresence mode="popLayout">
               <motion.div
@@ -343,11 +352,6 @@ export const Board: React.FC<BoardProps> = ({
                   rotate: [-15, 5, -5][parseInt(topCard.id.split('-')[1]) % 3] || -4,
                   opacity: 1,
                   scale: 1,
-                }}
-                onAnimationComplete={() => {
-                  if (hasDealt) {
-                    soundManager.play('place')
-                  }
                 }}
                 transition={{
                   type: 'spring',

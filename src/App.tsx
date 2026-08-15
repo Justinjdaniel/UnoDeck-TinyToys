@@ -72,14 +72,14 @@ export default function App() {
         const nextState = { ...engine.getState() }
         setGameState(nextState)
 
-        // Play appropriate sounds for bots
+        // Play appropriate sounds for bots (evaluate UNO before broader played condition)
         const lastAction = nextState.lastActionDescription
-        if (lastAction.includes('played')) {
+        if (lastAction.includes('UNO')) {
+          soundManager.play('uno')
+        } else if (lastAction.includes('played')) {
           soundManager.play('place')
         } else if (lastAction.includes('drew')) {
           soundManager.play('draw')
-        } else if (lastAction.includes('UNO')) {
-          soundManager.play('uno')
         }
       }, 1200)
     }
@@ -100,7 +100,10 @@ export default function App() {
   const handleVolumeChange = (newVolume: number) => {
     soundManager.setVolume(newVolume)
     setVolume(newVolume)
-    if (isMuted && newVolume > 0) {
+    if (newVolume === 0) {
+      soundManager.setMuted(true)
+      setIsMuted(true)
+    } else if (isMuted && newVolume > 0) {
       soundManager.setMuted(false)
       setIsMuted(false)
     }
@@ -193,6 +196,7 @@ export default function App() {
               onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
               className="w-16 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
               title="Volume"
+              aria-label="Volume"
             />
             <button
               onClick={toggleMute}
