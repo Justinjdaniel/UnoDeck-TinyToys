@@ -71,39 +71,39 @@ export const UnoCardUI: React.FC<UnoCardUIProps> = ({
   const normColor = card.color.toLowerCase() as 'red' | 'blue' | 'green' | 'yellow' | 'wild'
   const normValue = card.value.toLowerCase()
 
-  // Dynamic theme styling
+  // Dynamic theme styling with neon glows
   const getThemeClasses = () => {
     switch (normColor) {
       case 'red':
         return {
-          bg: 'bg-gradient-to-br from-red-500 to-red-600 shadow-red-500/20 text-white border-red-400',
-          oval: 'bg-red-700/40 border-red-400/50',
-          text: 'text-white',
+          bg: 'bg-gradient-to-br from-red-600 via-rose-600 to-red-700 text-white border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.7)] ring-1 ring-red-400/80',
+          oval: 'bg-red-950/60 border-red-400/70 shadow-[inset_0_0_8px_rgba(239,68,68,0.5)]',
+          text: 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]',
         }
       case 'blue':
         return {
-          bg: 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/20 text-white border-blue-400',
-          oval: 'bg-blue-700/40 border-blue-400/50',
-          text: 'text-white',
+          bg: 'bg-gradient-to-br from-blue-600 via-cyan-600 to-blue-700 text-white border-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.7)] ring-1 ring-cyan-400/80',
+          oval: 'bg-blue-950/60 border-cyan-300/70 shadow-[inset_0_0_8px_rgba(6,182,212,0.5)]',
+          text: 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]',
         }
       case 'green':
         return {
-          bg: 'bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-emerald-500/20 text-white border-emerald-400',
-          oval: 'bg-emerald-700/40 border-emerald-400/50',
-          text: 'text-white',
+          bg: 'bg-gradient-to-br from-emerald-600 via-teal-600 to-green-700 text-white border-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.7)] ring-1 ring-emerald-400/80',
+          oval: 'bg-emerald-950/60 border-emerald-300/70 shadow-[inset_0_0_8px_rgba(16,185,129,0.5)]',
+          text: 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]',
         }
       case 'yellow':
         return {
-          bg: 'bg-gradient-to-br from-amber-400 to-amber-500 shadow-amber-500/20 text-slate-900 border-amber-300',
-          oval: 'bg-amber-600/30 border-amber-300/50',
-          text: 'text-slate-900',
+          bg: 'bg-gradient-to-br from-amber-400 via-yellow-400 to-amber-500 text-slate-950 border-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.7)] ring-1 ring-amber-300/80',
+          oval: 'bg-amber-950/40 border-amber-300/70 shadow-[inset_0_0_8px_rgba(245,158,11,0.5)]',
+          text: 'text-slate-950 drop-shadow-[0_0_6px_rgba(255,255,255,0.8)]',
         }
       case 'wild':
       default:
         return {
-          bg: 'bg-gradient-to-br from-slate-800 to-slate-950 shadow-slate-950/40 text-white border-slate-700',
-          oval: 'bg-slate-800 border-slate-700/50',
-          text: 'text-white',
+          bg: 'bg-gradient-to-br from-purple-700 via-indigo-600 to-pink-600 text-white border-pink-300 shadow-[0_0_18px_rgba(236,72,153,0.8)] ring-1 ring-pink-400/80',
+          oval: 'bg-slate-950/70 border-purple-300/70 shadow-[inset_0_0_10px_rgba(236,72,153,0.6)]',
+          text: 'text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.9)]',
         }
     }
   }
@@ -123,13 +123,12 @@ export const UnoCardUI: React.FC<UnoCardUIProps> = ({
   if (isFaceDown) {
     return (
       <div
-        className={`w-16 h-24 sm:w-20 sm:h-28 rounded-xl border-4 border-slate-800 bg-slate-900 flex flex-col items-center justify-center relative shadow-lg flex-shrink-0 transition-all select-none ${className}`}
+        className={`w-16 h-24 sm:w-20 sm:h-28 rounded-xl border-4 border-slate-800 bg-slate-900 flex flex-col items-center justify-center relative shadow-[0_0_15px_rgba(59,130,246,0.3)] flex-shrink-0 transition-all select-none ${className}`}
         style={style}
       >
-        <div className="absolute inset-1.5 bg-gradient-to-br from-red-600 via-red-700 to-red-800 rounded-lg flex items-center justify-center border border-red-500 overflow-hidden shadow-inner">
-          {/* Decorative pattern lines */}
-          <div className="absolute inset-0 opacity-10 bg-[linear-gradient(45deg,#fff_25%,transparent_25%,transparent_50%,#fff_50%,#fff_75%,transparent_75%,transparent)] bg-[length:12px_12px]" />
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-white flex items-center justify-center font-black text-white italic text-lg sm:text-xl shadow-lg rotate-[-15deg] transform bg-gradient-to-br from-red-500 to-red-700">
+        <div className="absolute inset-1.5 bg-gradient-to-br from-cyan-600 via-blue-700 to-indigo-900 rounded-lg flex items-center justify-center border border-cyan-400 overflow-hidden shadow-inner">
+          <div className="absolute inset-0 opacity-20 bg-[linear-gradient(45deg,#fff_25%,transparent_25%,transparent_50%,#fff_50%,#fff_75%,transparent_75%,transparent)] bg-[length:12px_12px]" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-cyan-300 flex items-center justify-center font-black text-white italic text-lg sm:text-xl shadow-[0_0_12px_rgba(6,182,212,0.8)] rotate-[-15deg] transform bg-gradient-to-br from-cyan-500 to-blue-700">
             U
           </div>
         </div>
@@ -155,17 +154,17 @@ export const UnoCardUI: React.FC<UnoCardUIProps> = ({
     <div
       onClick={!disabled && isPlayable ? onClick : undefined}
       {...interactiveProps}
-      className={`w-16 h-24 sm:w-20 sm:h-28 rounded-xl border-4 flex flex-col items-center justify-center relative flex-shrink-0 select-none transition-all ${theme.bg} ${
+      className={`w-16 h-24 sm:w-20 sm:h-28 rounded-xl border-2 flex flex-col items-center justify-center relative flex-shrink-0 select-none transition-all ${theme.bg} ${
         isPlayable && !disabled
-          ? 'hover:-translate-y-3 hover:scale-105 active:scale-95 shadow-md border-white cursor-pointer ring-2 ring-emerald-500 ring-offset-2 ring-offset-slate-950 focus:outline-none focus:ring-4'
+          ? 'hover:-translate-y-3 hover:scale-105 active:scale-95 shadow-lg border-white cursor-pointer ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-950 focus:outline-none focus:ring-4 animate-pulse'
           : disabled || !isPlayable
-            ? 'opacity-60 grayscale-[10%]'
+            ? 'opacity-85'
             : ''
       } ${className}`}
       style={style}
     >
       {/* Top Left Mini Value */}
-      <div className="absolute top-1 left-1.5 text-[10px] sm:text-xs font-black tracking-tighter leading-none">
+      <div className="absolute top-1 left-1.5 text-[10px] sm:text-xs font-black tracking-tighter leading-none drop-shadow-[0_0_4px_rgba(0,0,0,0.8)]">
         {formattedMiniValue}
       </div>
 
@@ -179,7 +178,7 @@ export const UnoCardUI: React.FC<UnoCardUIProps> = ({
       </div>
 
       {/* Bottom Right Mini Value (Rotated) */}
-      <div className="absolute bottom-1 right-1.5 text-[10px] sm:text-xs font-black tracking-tighter leading-none transform rotate-180">
+      <div className="absolute bottom-1 right-1.5 text-[10px] sm:text-xs font-black tracking-tighter leading-none transform rotate-180 drop-shadow-[0_0_4px_rgba(0,0,0,0.8)]">
         {formattedMiniValue}
       </div>
     </div>

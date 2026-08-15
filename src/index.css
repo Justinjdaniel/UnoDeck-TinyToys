@@ -5,9 +5,9 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #0f172a;
+  background-color: #030712;
   color: #f8fafc;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
@@ -22,7 +22,7 @@ body {
   scrollbar-width: none; /* Firefox */
 }
 
-/* Mobile-first viewport container */
+/* Mobile-first viewport container with hyper-gamified dark background */
 .mobile-viewport {
   max-width: 480px;
   width: 100vw;
@@ -30,16 +30,120 @@ body {
   height: 100svh;
   margin: 0 auto;
   position: relative;
-  background-color: #0f172a;
+  background: radial-gradient(circle at center, #0b193d 0%, #030712 100%);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+  box-shadow: 0 0 50px rgba(6, 182, 212, 0.25);
   overflow: hidden;
+}
+
+/* Outer Neon Geometric Frame */
+.neon-frame {
+  position: relative;
+  border: 2px solid rgba(6, 182, 212, 0.7);
+  box-shadow:
+    inset 0 0 15px rgba(6, 182, 212, 0.3),
+    0 0 20px rgba(6, 182, 212, 0.4);
+}
+
+.neon-frame::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  pointer-events: none;
+}
+
+/* Metallic Blue Header Bar */
+.metallic-header {
+  background: linear-gradient(
+    180deg,
+    #1e3a8a 0%,
+    #1d4ed8 25%,
+    #1e40af 50%,
+    #172554 100%
+  );
+  border-bottom: 2px solid #38bdf8;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+/* Sound Text Cues Glow */
+.sound-text-cue {
+  font-family: monospace, sans-serif;
+  font-weight: 900;
+  color: #38bdf8;
+  text-shadow:
+    0 0 5px #38bdf8,
+    0 0 12px #0284c7,
+    0 0 20px #0369a1;
+  animation: pulseCue 1.8s infinite ease-in-out;
+}
+
+@keyframes pulseCue {
+  0%, 100% {
+    opacity: 0.85;
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px #38bdf8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 8px #38bdf8);
+  }
+}
+
+/* Neon UNO Button */
+.neon-uno-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #991b1b 100%);
+  border: 2px solid #fca5a5;
+  box-shadow:
+    0 0 15px rgba(239, 68, 68, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: all 0.2s ease;
+}
+
+.neon-uno-btn:hover {
+  box-shadow:
+    0 0 25px rgba(239, 68, 68, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transform: scale(1.05);
+}
+
+.neon-uno-btn:active {
+  transform: scale(0.95);
+}
+
+/* Central Neon Turn Indicator Circle */
+.neon-turn-circle {
+  border: 3px solid #06b6d4;
+  box-shadow:
+    0 0 20px rgba(6, 182, 212, 0.8),
+    inset 0 0 15px rgba(6, 182, 212, 0.5);
+  background: radial-gradient(circle, rgba(14, 116, 144, 0.4) 0%, rgba(3, 7, 18, 0.8) 100%);
+}
+
+/* Glowing text utilities */
+.glow-text-cyan {
+  color: #38bdf8;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
+}
+
+.glow-text-yellow {
+  color: #fde047;
+  text-shadow: 0 0 8px rgba(253, 224, 71, 0.8);
+}
+
+.glow-text-green {
+  color: #4ade80;
+  text-shadow: 0 0 8px rgba(74, 222, 128, 0.8);
 }
 
 /* Card 3D shine and flip effects */
 .uno-card-shadow {
   box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.3),
-    0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    0 4px 15px rgba(0, 0, 0, 0.6),
+    0 0 10px rgba(6, 182, 212, 0.3);
 }

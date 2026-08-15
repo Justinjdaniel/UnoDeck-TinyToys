@@ -40,16 +40,12 @@ export default function App() {
     const playersSetup =
       mode === 'VS_BOT'
         ? [
-            { name: 'You', isBot: false },
-            { name: 'Slick Bot', isBot: true },
-            { name: 'Chippy Bot', isBot: true },
-            { name: 'Smarty Bot', isBot: true },
+            { name: 'PixelPilot', isBot: false },
+            { name: 'AstroBot v2', isBot: true },
           ]
         : [
-            { name: 'Player 1', isBot: false },
+            { name: 'PixelPilot', isBot: false },
             { name: 'Player 2', isBot: false },
-            { name: 'Player 3', isBot: false },
-            { name: 'Player 4', isBot: false },
           ]
 
     const newEngine = new UnoEngine(playersSetup, mode)
@@ -206,13 +202,13 @@ export default function App() {
     return (
       <div className="mobile-viewport select-none flex flex-col justify-between">
         {/* Top Navbar with Volume Controls */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-cyan-500/30 bg-slate-900/80">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-gradient-to-tr from-red-500 via-yellow-500 to-blue-500 flex items-center justify-center font-black text-slate-950 text-sm italic shadow-lg">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-400 via-blue-500 to-indigo-600 flex items-center justify-center font-black text-white text-sm italic shadow-[0_0_12px_rgba(6,182,212,0.8)]">
               U
             </div>
-            <h1 className="text-lg font-black tracking-tight text-white uppercase m-0 leading-none">
-              UnoDeck
+            <h1 className="text-lg font-black tracking-tight text-cyan-300 uppercase m-0 leading-none glow-text-cyan">
+              UnoDeck Neon
             </h1>
           </div>
 
@@ -224,13 +220,13 @@ export default function App() {
               step="0.05"
               value={isMuted ? 0 : volume}
               onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-              className="w-16 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+              className="w-16 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-400"
               title="Volume"
               aria-label="Volume"
             />
             <button
               onClick={toggleMute}
-              className="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              className="p-2 rounded-full hover:bg-slate-800 text-cyan-300 hover:text-white transition-colors"
               title={isMuted ? 'Unmute' : 'Mute'}
             >
               {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
@@ -239,40 +235,39 @@ export default function App() {
         </div>
 
         {/* Hero Section */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center bg-gradient-to-b from-slate-900 to-slate-950">
+        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative">
           <div className="relative mb-6">
             {/* Stacked 3D cards visual */}
-            <div className="w-24 h-36 bg-red-500 rounded-xl border-4 border-white shadow-2xl rotate-[-15deg] absolute -left-8 -top-4 flex items-center justify-center font-black text-4xl text-white italic">
-              0
+            <div className="w-24 h-36 bg-red-600 rounded-xl border-2 border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.8)] rotate-[-15deg] absolute -left-8 -top-4 flex items-center justify-center font-black text-4xl text-white italic">
+              7
             </div>
-            <div className="w-24 h-36 bg-blue-500 rounded-xl border-4 border-white shadow-2xl rotate-[10deg] absolute -right-8 -top-2 flex items-center justify-center font-black text-4xl text-white italic">
+            <div className="w-24 h-36 bg-blue-600 rounded-xl border-2 border-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.8)] rotate-[10deg] absolute -right-8 -top-2 flex items-center justify-center font-black text-4xl text-white italic">
               ⇄
             </div>
-            <div className="w-24 h-36 bg-slate-950 rounded-xl border-4 border-white shadow-2xl rotate-[-2deg] flex items-center justify-center font-black text-3xl text-white italic relative z-10">
-              <span className="bg-gradient-to-r from-red-400 via-yellow-400 to-emerald-400 bg-clip-text text-transparent">
+            <div className="w-24 h-36 bg-purple-700 rounded-xl border-2 border-pink-400 shadow-[0_0_20px_rgba(236,72,153,0.8)] rotate-[-2deg] flex items-center justify-center font-black text-3xl text-white italic relative z-10">
+              <span className="bg-gradient-to-r from-red-400 via-yellow-300 to-cyan-300 bg-clip-text text-transparent">
                 +4
               </span>
             </div>
           </div>
 
-          <h2 className="text-3xl font-extrabold text-white tracking-tight leading-tight mb-2">
-            Mobile-First Uno Play
+          <h2 className="text-3xl font-black text-cyan-300 tracking-tight leading-tight mb-2 uppercase glow-text-cyan">
+            Neon Arena Uno
           </h2>
-          <p className="text-slate-400 text-xs max-w-xs mb-6">
-            Experience tactile, fast-paced UNO with smart heuristic AI bot engines or local
-            pass-and-play.
+          <p className="text-slate-300 text-xs max-w-xs mb-6 font-semibold">
+            Experience hyper-gamified neon UNO with PixelPilot vs AstroBot v2 in Arena 3.
           </p>
 
           {/* Game Mode Switcher Control */}
-          <div className="w-full max-w-xs bg-slate-900 border border-slate-800 p-1.5 rounded-2xl flex gap-1 mb-5">
+          <div className="w-full max-w-xs bg-slate-900/90 border border-cyan-500/40 p-1.5 rounded-2xl flex gap-1 mb-5 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
             <button
               onClick={() => {
                 soundManager.play('click')
                 setSelectedMode('VS_BOT')
               }}
-              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 uppercase ${
                 selectedMode === 'VS_BOT'
-                  ? 'bg-amber-500 text-slate-950 shadow-md'
+                  ? 'bg-cyan-500 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.8)]'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
@@ -284,9 +279,9 @@ export default function App() {
                 soundManager.play('click')
                 setSelectedMode('LOCAL_PASS_PLAY')
               }}
-              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 uppercase ${
                 selectedMode === 'LOCAL_PASS_PLAY'
-                  ? 'bg-amber-500 text-slate-950 shadow-md'
+                  ? 'bg-cyan-500 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.8)]'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
@@ -297,12 +292,12 @@ export default function App() {
 
           <button
             onClick={() => handleInitGame(selectedMode)}
-            className="w-full max-w-xs py-4 px-8 bg-gradient-to-r from-red-500 via-amber-500 to-emerald-500 text-white font-bold rounded-2xl shadow-xl shadow-amber-500/10 hover:shadow-amber-500/20 transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-3 text-lg"
+            className="w-full max-w-xs py-4 px-8 bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 text-white font-black rounded-2xl shadow-[0_0_20px_rgba(6,182,212,0.8)] hover:opacity-95 transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-3 text-base uppercase tracking-wider"
           >
             {selectedMode === 'VS_BOT' ? (
               <>
                 <Play fill="white" size={20} />
-                Start Match vs Bots
+                Enter Arena 3 Match
               </>
             ) : (
               <>
@@ -314,22 +309,24 @@ export default function App() {
         </div>
 
         {/* Bottom Specs Info */}
-        <div className="px-6 py-6 border-t border-slate-800 bg-slate-950/80 text-center flex flex-col items-center gap-2">
-          <div className="flex gap-4 text-xs text-slate-500 font-medium">
+        <div className="px-6 py-5 border-t border-cyan-500/30 bg-slate-950 text-center flex flex-col items-center gap-2">
+          <div className="flex gap-4 text-xs text-slate-400 font-bold">
             <span className="flex items-center gap-1">
-              <Sparkles size={12} className="text-amber-500" />
+              <Sparkles size={12} className="text-cyan-400" />
               React 19
             </span>
             <span className="flex items-center gap-1">
-              <Zap size={12} className="text-indigo-500" />
+              <Zap size={12} className="text-purple-400" />
               Web Audio API
             </span>
             <span className="flex items-center gap-1">
-              <CheckCircle2 size={12} className="text-emerald-500" />
+              <CheckCircle2 size={12} className="text-emerald-400" />
               Vitest Certified
             </span>
           </div>
-          <p className="text-[10px] text-slate-600">Built for high performance offline play.</p>
+          <p className="text-[10px] text-slate-500 font-semibold">
+            Hyper-Gamified Mobile-First Uno UI
+          </p>
         </div>
       </div>
     )
@@ -357,18 +354,18 @@ export default function App() {
 
       {/* Instructions / Rules Modal */}
       {ruleModalOpen && (
-        <div className="absolute inset-0 bg-slate-950/95 flex flex-col justify-between p-6 z-50">
+        <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex flex-col justify-between p-6 z-50">
           <div className="flex-1 overflow-y-auto no-scrollbar">
             <div className="flex items-center gap-2 mb-4">
-              <Info size={24} className="text-amber-500" />
-              <h3 className="text-xl font-extrabold text-white tracking-tight leading-none uppercase">
+              <Info size={24} className="text-cyan-400" />
+              <h3 className="text-xl font-black text-cyan-300 tracking-tight leading-none uppercase glow-text-cyan">
                 Uno Rules & Manual
               </h3>
             </div>
 
             <div className="space-y-4 text-xs text-slate-300 font-medium">
               <div>
-                <h4 className="font-extrabold text-white uppercase text-[10px] tracking-wider mb-1">
+                <h4 className="font-extrabold text-cyan-300 uppercase text-[10px] tracking-wider mb-1">
                   Classic Play Rules
                 </h4>
                 <p>
@@ -378,7 +375,7 @@ export default function App() {
               </div>
 
               <div>
-                <h4 className="font-extrabold text-white uppercase text-[10px] tracking-wider mb-1">
+                <h4 className="font-extrabold text-cyan-300 uppercase text-[10px] tracking-wider mb-1">
                   Card Stacking Penalty
                 </h4>
                 <p>
@@ -389,7 +386,7 @@ export default function App() {
               </div>
 
               <div>
-                <h4 className="font-extrabold text-white uppercase text-[10px] tracking-wider mb-1">
+                <h4 className="font-extrabold text-cyan-300 uppercase text-[10px] tracking-wider mb-1">
                   Calling UNO
                 </h4>
                 <p>
@@ -406,7 +403,7 @@ export default function App() {
               soundManager.play('click')
               setRuleModalOpen(false)
             }}
-            className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-center text-xs transition-colors mt-4"
+            className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-black rounded-xl text-center text-xs transition-colors mt-4 uppercase tracking-wider"
           >
             Back to Match
           </button>
