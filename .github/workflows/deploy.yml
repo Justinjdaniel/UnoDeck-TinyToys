@@ -1,22 +1,18 @@
-name: Deploy
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
-concurrency:
-  group: 'pages'
-  cancel-in-progress: true
+permissions:
+  contents: write
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
-      - name: Checkout repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -25,41 +21,17 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: npm ci
 
-      - name: Verify code formatting
-        run: npm run format:check
+      - name: Install Playwright Browsers
+        run: npx playwright install chromium --with-deps
 
-      - name: Run Linter
-        run: npm run lint
+      - name: Run Quality Gate and Build
+        run: npm run quality-gate
 
-      - name: Run Unit Tests
-        run: npm run test
-
-      - name: Build Project
-        run: npm run build
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+      - name: Deploy static site to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          enablement: true
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './dist'
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      pages: write
-      id-token: write
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          folder: dist
+          branch: gh-pages
