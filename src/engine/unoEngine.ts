@@ -1,3 +1,5 @@
+import { decideBotMove, getDominantColor, type GameMode } from './botAI'
+
 export type CardColor = 'Red' | 'Blue' | 'Green' | 'Yellow' | 'Wild'
 
 export type CardValue =
@@ -47,12 +49,13 @@ export interface UnoGameState {
   lastActionDescription: string
   hasDrawnThisTurn: boolean // Track if current player has drawn a card this turn
   isWildFromPlay: boolean // Track if the pending wild card was played from hand (versus starter card)
+  mode: GameMode
 }
 
 export class UnoEngine {
   public state: UnoGameState
 
-  constructor(playerNames: { name: string; isBot: boolean }[]) {
+  constructor(playerNames: { name: string; isBot: boolean }[], mode: GameMode = 'VS_BOT') {
     if (playerNames.length < 2 || playerNames.length > 10) {
       throw new Error('UNO requires between 2 and 10 players.')
     }
@@ -79,6 +82,7 @@ export class UnoEngine {
       lastActionDescription: 'Game initialized. Waiting to start.',
       hasDrawnThisTurn: false,
       isWildFromPlay: false,
+      mode,
     }
   }
 
@@ -496,16 +500,8 @@ export class UnoEngine {
   }
 
   // AI bot pick color selection helper
-  private pickBestColor(hand: UnoCard[]): CardColor {
-    const colors: CardColor[] = ['Red', 'Blue', 'Green', 'Yellow']
-    const counts = colors.reduce(
-      (acc, color) => {
-        acc[color] = hand.filter((c) => c.color === color).length
-        return acc
-      },
-      {} as Record<CardColor, number>,
-    )
-    return colors.reduce((a, b) => (counts[a] >= counts[b] ? a : b), 'Red')
+  public pickBestColor(hand: UnoCard[]): CardColor {
+    return getDominantColor(hand)
   }
 
   public makeBotDecision(): void {
@@ -514,54 +510,57 @@ export class UnoEngine {
       return
     }
 
-    const playableCards = activePlayer.hand.filter((card) => {
-      if (this.state.activeDrawPenalty > 0) {
-        const topCard = this.state.discardPile[this.state.discardPile.length - 1]
-        return this.canStackOnPenalty(topCard, card)
-      }
-      return this.isValidMove(card)
-    })
+    const decision = decideBotMove(
+      this.state,
+      activePlayer,
+      (card) => this.isValidMove(card),
+      (topCard, card) => this.canStackOnPenalty(topCard, card),
+    )
 
-    if (this.state.selectedWildCard) {
-      const bestColor = this.pickBestColor(activePlayer.hand)
-      this.chooseWildColor(activePlayer.id, bestColor)
+    if (decision.action === 'chooseColor' && decision.chosenColor) {
+      this.chooseWildColor(activePlayer.id, decision.chosenColor)
       return
     }
 
-    if (playableCards.length > 0) {
-      const cardToPlay = playableCards[0]
-      const shouldSayUno = activePlayer.hand.length === 2
+    if (decision.action === 'play' && decision.cardId) {
+      this.playCard(activePlayer.id, decision.cardId)
 
-      this.playCard(activePlayer.id, cardToPlay.id)
-
-      if (shouldSayUno) {
+      if (decision.shouldSayUno) {
         this.sayUno(activePlayer.id)
       }
 
-      if (cardToPlay.color === 'Wild' && this.state.selectedWildCard) {
+      if (this.state.selectedWildCard) {
         const bestColor = this.pickBestColor(activePlayer.hand)
         this.chooseWildColor(activePlayer.id, bestColor)
       }
-    } else {
-      if (this.state.hasDrawnThisTurn) {
-        this.pass(activePlayer.id)
-      } else {
-        this.drawCard(activePlayer.id)
-        // If they drew a playable card but can decide to play it or pass, let them pass if still their turn.
-        const currentActive = this.state.players[this.state.currentPlayerIndex]
-        if (currentActive.id === activePlayer.id) {
-          const playableAfterDraw = activePlayer.hand.filter((c) => this.isValidMove(c))
-          if (playableAfterDraw.length > 0) {
-            const shouldSayUno = activePlayer.hand.length === 2
-            this.playCard(activePlayer.id, playableAfterDraw[0].id)
-            if (shouldSayUno) {
-              this.sayUno(activePlayer.id)
-            }
-          } else {
-            this.pass(activePlayer.id)
+    } else if (decision.action === 'draw') {
+      this.drawCard(activePlayer.id)
+
+      // Re-evaluate if drawn card is playable
+      const currentActive = this.state.players[this.state.currentPlayerIndex]
+      if (currentActive.id === activePlayer.id) {
+        const secondDecision = decideBotMove(
+          this.state,
+          activePlayer,
+          (card) => this.isValidMove(card),
+          (topCard, card) => this.canStackOnPenalty(topCard, card),
+        )
+
+        if (secondDecision.action === 'play' && secondDecision.cardId) {
+          this.playCard(activePlayer.id, secondDecision.cardId)
+          if (secondDecision.shouldSayUno) {
+            this.sayUno(activePlayer.id)
           }
+          if (this.state.selectedWildCard) {
+            const bestColor = this.pickBestColor(activePlayer.hand)
+            this.chooseWildColor(activePlayer.id, bestColor)
+          }
+        } else {
+          this.pass(activePlayer.id)
         }
       }
+    } else if (decision.action === 'pass') {
+      this.pass(activePlayer.id)
     }
   }
 }

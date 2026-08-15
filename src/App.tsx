@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import { Play, Volume2, VolumeX, Sparkles, CheckCircle2, Info, Zap } from 'lucide-react'
+import { Play, Users, Volume2, VolumeX, Sparkles, CheckCircle2, Info, Zap } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { UnoEngine, type CardColor, type UnoCard } from './engine/unoEngine'
+import { getBotThinkingDelay, type GameMode } from './engine/botAI'
 import { Board } from './components/Board'
 import { soundManager } from './utils/soundManager'
 
 export default function App() {
+  const [selectedMode, setSelectedMode] = useState<GameMode>('VS_BOT')
   const [engine, setEngine] = useState<UnoEngine | null>(null)
   const [gameState, setGameState] = useState<ReturnType<UnoEngine['getState']> | null>(null)
   const [isMuted, setIsMuted] = useState(() => soundManager.isMuted())
@@ -30,15 +32,27 @@ export default function App() {
     setGameState(null)
   }
 
-  const handleInitGame = () => {
+  const handleInitGame = (modeOverride?: GameMode) => {
     soundManager.init()
     soundManager.play('shuffle')
-    const newEngine = new UnoEngine([
-      { name: 'You', isBot: false },
-      { name: 'Slick Bot', isBot: true },
-      { name: 'Chippy Bot', isBot: true },
-      { name: 'Smarty Bot', isBot: true },
-    ])
+    const mode = modeOverride || selectedMode
+
+    const playersSetup =
+      mode === 'VS_BOT'
+        ? [
+            { name: 'You', isBot: false },
+            { name: 'Slick Bot', isBot: true },
+            { name: 'Chippy Bot', isBot: true },
+            { name: 'Smarty Bot', isBot: true },
+          ]
+        : [
+            { name: 'Player 1', isBot: false },
+            { name: 'Player 2', isBot: false },
+            { name: 'Player 3', isBot: false },
+            { name: 'Player 4', isBot: false },
+          ]
+
+    const newEngine = new UnoEngine(playersSetup, mode)
     newEngine.startGame()
     setEngine(newEngine)
     setGameState({ ...newEngine.getState() })
@@ -47,32 +61,47 @@ export default function App() {
   // Trigger win or lose audio & win confetti on game over
   useEffect(() => {
     if (gameState?.status === 'GAME_OVER') {
-      if (gameState.winnerId === 'player-0') {
-        confetti({
-          particleCount: 150,
-          spread: 80,
-          origin: { y: 0.6 },
-        })
-        soundManager.play('win')
+      const activeWinner = gameState.players.find((p) => p.id === gameState.winnerId)
+      if (gameState.mode === 'VS_BOT') {
+        if (gameState.winnerId === 'player-0') {
+          confetti({
+            particleCount: 150,
+            spread: 80,
+            origin: { y: 0.6 },
+          })
+          soundManager.play('win')
+        } else {
+          soundManager.play('lose')
+        }
       } else {
-        soundManager.play('lose')
+        // Local pass & play mode win
+        if (activeWinner) {
+          confetti({
+            particleCount: 150,
+            spread: 80,
+            origin: { y: 0.6 },
+          })
+          soundManager.play('win')
+        }
       }
     }
-  }, [gameState?.status, gameState?.winnerId])
+  }, [gameState?.status, gameState?.winnerId, gameState?.mode, gameState?.players])
 
-  // Bot play logic interval
+  // Automate bot turn execution inside React useEffect listening to turn transitions in VS Bot mode
   useEffect(() => {
     if (!engine || !gameState || gameState.status !== 'PLAYING') return
 
     const currentPlayer = gameState.players[gameState.currentPlayerIndex]
     if (currentPlayer.isBot) {
       if (botTimerRef.current) clearTimeout(botTimerRef.current)
+      const thinkingDelay = getBotThinkingDelay(800, 1200)
+
       botTimerRef.current = setTimeout(() => {
         engine.makeBotDecision()
         const nextState = { ...engine.getState() }
         setGameState(nextState)
 
-        // Play appropriate sounds for bots (evaluate UNO before broader played condition)
+        // Play appropriate sounds for bots
         const lastAction = nextState.lastActionDescription
         if (lastAction.includes('UNO')) {
           soundManager.play('uno')
@@ -81,7 +110,7 @@ export default function App() {
         } else if (lastAction.includes('drew')) {
           soundManager.play('draw')
         }
-      }, 1200)
+      }, thinkingDelay)
     }
 
     return () => {
@@ -112,13 +141,12 @@ export default function App() {
   const handlePlayCard = (cardId: string) => {
     if (!engine || !gameState) return
     const activePlayer = gameState.players[gameState.currentPlayerIndex]
-    if (activePlayer.id !== 'player-0') return
 
     try {
       const card = activePlayer.hand.find((c) => c.id === cardId)
       if (!card) return
 
-      engine.playCard('player-0', cardId)
+      engine.playCard(activePlayer.id, cardId)
       const nextState = { ...engine.getState() }
       setGameState(nextState)
       soundManager.play('place')
@@ -130,10 +158,9 @@ export default function App() {
   const handleDrawCard = () => {
     if (!engine || !gameState) return
     const activePlayer = gameState.players[gameState.currentPlayerIndex]
-    if (activePlayer.id !== 'player-0') return
 
     try {
-      engine.drawCard('player-0')
+      engine.drawCard(activePlayer.id)
       setGameState({ ...engine.getState() })
       soundManager.play('draw')
     } catch (err: unknown) {
@@ -143,22 +170,25 @@ export default function App() {
 
   const handleSayUno = () => {
     if (!engine || !gameState) return
-    engine.sayUno('player-0')
+    const activePlayer = gameState.players[gameState.currentPlayerIndex]
+    engine.sayUno(activePlayer.id)
     setGameState({ ...engine.getState() })
     soundManager.play('uno')
   }
 
   const handleChallenge = (targetPlayerId: string) => {
     if (!engine || !gameState) return
-    engine.challengeUno('player-0', targetPlayerId)
+    const activePlayer = gameState.players[gameState.currentPlayerIndex]
+    engine.challengeUno(activePlayer.id, targetPlayerId)
     setGameState({ ...engine.getState() })
     soundManager.play('click')
   }
 
   const handleChooseColor = (color: CardColor) => {
     if (!engine || !gameState) return
+    const activePlayer = gameState.players[gameState.currentPlayerIndex]
     try {
-      engine.chooseWildColor('player-0', color)
+      engine.chooseWildColor(activePlayer.id, color)
       setGameState({ ...engine.getState() })
       soundManager.play('click')
     } catch (err: unknown) {
@@ -172,7 +202,7 @@ export default function App() {
   }
 
   if (!engine || !gameState) {
-    // STARTING / LANDING SCREEN
+    // STARTING / LANDING SCREEN with MODE SWITCHER
     return (
       <div className="mobile-viewport select-none flex flex-col justify-between">
         {/* Top Navbar with Volume Controls */}
@@ -210,8 +240,8 @@ export default function App() {
 
         {/* Hero Section */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 text-center bg-gradient-to-b from-slate-900 to-slate-950">
-          <div className="relative mb-8">
-            {/* Fancy stacked 3D cards visual */}
+          <div className="relative mb-6">
+            {/* Stacked 3D cards visual */}
             <div className="w-24 h-36 bg-red-500 rounded-xl border-4 border-white shadow-2xl rotate-[-15deg] absolute -left-8 -top-4 flex items-center justify-center font-black text-4xl text-white italic">
               0
             </div>
@@ -228,17 +258,58 @@ export default function App() {
           <h2 className="text-3xl font-extrabold text-white tracking-tight leading-tight mb-2">
             Mobile-First Uno Play
           </h2>
-          <p className="text-slate-400 text-sm max-w-xs mb-8">
-            Experience the ultimate, tactile, and fast-paced UNO game built optimized for your
-            phone. Smart AI, audio, and fluid mechanics.
+          <p className="text-slate-400 text-xs max-w-xs mb-6">
+            Experience tactile, fast-paced UNO with smart heuristic AI bot engines or local
+            pass-and-play.
           </p>
 
+          {/* Game Mode Switcher Control */}
+          <div className="w-full max-w-xs bg-slate-900 border border-slate-800 p-1.5 rounded-2xl flex gap-1 mb-5">
+            <button
+              onClick={() => {
+                soundManager.play('click')
+                setSelectedMode('VS_BOT')
+              }}
+              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                selectedMode === 'VS_BOT'
+                  ? 'bg-amber-500 text-slate-950 shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+              }`}
+            >
+              <Play fill={selectedMode === 'VS_BOT' ? 'black' : 'none'} size={14} />
+              VS Bot (AI)
+            </button>
+            <button
+              onClick={() => {
+                soundManager.play('click')
+                setSelectedMode('LOCAL_PASS_PLAY')
+              }}
+              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                selectedMode === 'LOCAL_PASS_PLAY'
+                  ? 'bg-amber-500 text-slate-950 shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+              }`}
+            >
+              <Users size={14} />
+              Pass & Play
+            </button>
+          </div>
+
           <button
-            onClick={handleInitGame}
+            onClick={() => handleInitGame(selectedMode)}
             className="w-full max-w-xs py-4 px-8 bg-gradient-to-r from-red-500 via-amber-500 to-emerald-500 text-white font-bold rounded-2xl shadow-xl shadow-amber-500/10 hover:shadow-amber-500/20 transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-3 text-lg"
           >
-            <Play fill="white" size={20} />
-            Quick Match vs Bots
+            {selectedMode === 'VS_BOT' ? (
+              <>
+                <Play fill="white" size={20} />
+                Start Match vs Bots
+              </>
+            ) : (
+              <>
+                <Users size={20} />
+                Start Pass & Play
+              </>
+            )}
           </button>
         </div>
 
@@ -280,7 +351,7 @@ export default function App() {
         handleSayUno={handleSayUno}
         handleChallenge={handleChallenge}
         handleChooseColor={handleChooseColor}
-        handleInitGame={handleInitGame}
+        handleInitGame={() => handleInitGame(gameState.mode)}
         isValidPlay={isValidPlay}
       />
 

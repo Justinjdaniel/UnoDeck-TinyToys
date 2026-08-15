@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { RotateCcw, Bot, User, Award, Volume2, VolumeX, Info } from 'lucide-react'
+import { RotateCcw, Bot, User, Award, Volume2, VolumeX, Info, ArrowRight } from 'lucide-react'
 import { UnoCardUI, type CardColorType } from './UnoCardUI'
 import { type UnoGameState, type UnoCard, type CardColor, type Player } from '../engine/unoEngine'
 import { soundManager } from '../utils/soundManager'
@@ -63,7 +63,7 @@ const OpponentPanel: React.FC<OpponentPanelProps> = ({
       <div
         className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${avatarColor} flex items-center justify-center text-white font-bold text-xs sm:text-sm shadow`}
       >
-        <Bot size={14} />
+        {player.isBot ? <Bot size={14} /> : <User size={14} />}
       </div>
       <div className={layoutType === 'col' ? 'text-center' : ''}>
         <div className="flex items-center gap-1 justify-center">
@@ -118,14 +118,21 @@ export const Board: React.FC<BoardProps> = ({
   isValidPlay,
   handleQuitMatch,
 }) => {
-  const myPlayer = gameState.players.find((p) => p.id === 'player-0') || gameState.players[0]
-  const opponentBots = gameState.players.filter((p) => p.id !== 'player-0')
+  const isPassAndPlay = gameState.mode === 'LOCAL_PASS_PLAY'
+  const activePlayer = gameState.players[gameState.currentPlayerIndex]
 
-  const slickBot = opponentBots[0] || { id: 'bot-1', name: 'Slick Bot', hand: [] }
-  const chippyBot = opponentBots[1] || { id: 'bot-2', name: 'Chippy Bot', hand: [] }
-  const smartyBot = opponentBots[2] || { id: 'bot-3', name: 'Smarty Bot', hand: [] }
+  // In pass and play, active player is activePlayer; in VS_BOT, "myPlayer" is always player-0
+  const myPlayer = isPassAndPlay
+    ? activePlayer
+    : gameState.players.find((p) => p.id === 'player-0') || gameState.players[0]
 
-  const isMyTurn = gameState.currentPlayerIndex === 0
+  const opponentPlayers = gameState.players.filter((p) => p.id !== myPlayer.id)
+
+  const topOpponent = opponentPlayers[1] || opponentPlayers[0]
+  const leftOpponent = opponentPlayers[0]
+  const rightOpponent = opponentPlayers[2] || opponentPlayers[1] || opponentPlayers[0]
+
+  const isMyTurn = gameState.currentPlayerIndex === gameState.players.indexOf(myPlayer)
   const topCard =
     gameState.discardPile.length > 0
       ? gameState.discardPile[gameState.discardPile.length - 1]
@@ -133,6 +140,17 @@ export const Board: React.FC<BoardProps> = ({
 
   const dragActiveRef = useRef(false)
   const isWildModalOpen = !!(gameState.selectedWildCard && isMyTurn)
+
+  // Pass & Play transition state
+  const [passConfirmed, setPassConfirmed] = useState(false)
+  const lastTurnIndexRef = useRef(gameState.currentPlayerIndex)
+
+  useEffect(() => {
+    if (isPassAndPlay && gameState.currentPlayerIndex !== lastTurnIndexRef.current) {
+      setPassConfirmed(false)
+      lastTurnIndexRef.current = gameState.currentPlayerIndex
+    }
+  }, [gameState.currentPlayerIndex, isPassAndPlay])
 
   // Derive hasDealt during render or update via timer callback
   const [hasDealt, setHasDealt] = useState(false)
@@ -152,7 +170,7 @@ export const Board: React.FC<BoardProps> = ({
     }
   }, [isPlaying])
 
-  if (!myPlayer || opponentBots.length < 3) {
+  if (!myPlayer || opponentPlayers.length < 1) {
     return (
       <div className="mobile-viewport flex flex-col items-center justify-center p-6 bg-slate-950 text-white">
         <p className="text-sm font-semibold text-slate-400 mb-4">Setting up game board...</p>
@@ -200,7 +218,7 @@ export const Board: React.FC<BoardProps> = ({
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
           <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-            Match Active
+            {isPassAndPlay ? 'Pass & Play' : 'VS Bot'}
           </span>
         </div>
 
@@ -236,16 +254,18 @@ export const Board: React.FC<BoardProps> = ({
         </div>
       </div>
 
-      {/* 2. Top Opponent (Bot 2 - Chippy) */}
+      {/* 2. Top Opponent */}
       <div className="flex justify-center py-2 bg-slate-900/30 border-b border-slate-900/80 shrink-0 relative z-20">
-        <OpponentPanel
-          player={chippyBot as Player}
-          avatarColor="bg-indigo-600"
-          isActive={gameState.currentPlayerIndex === 2}
-          isUnoCalled={!!gameState.unoCalls[chippyBot.id]}
-          onChallenge={handleChallenge}
-          layoutType="row"
-        />
+        {topOpponent && (
+          <OpponentPanel
+            player={topOpponent}
+            avatarColor="bg-indigo-600"
+            isActive={gameState.currentPlayerIndex === gameState.players.indexOf(topOpponent)}
+            isUnoCalled={!!gameState.unoCalls[topOpponent.id]}
+            onChallenge={handleChallenge}
+            layoutType="row"
+          />
+        )}
 
         {/* Direction Indicator Widget */}
         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 px-2 py-1 rounded-md">
@@ -269,29 +289,33 @@ export const Board: React.FC<BoardProps> = ({
 
       {/* 3. Center Board Area */}
       <div className="flex-1 flex flex-col justify-between p-4 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-        {/* Left Opponent (Bot 1 - Slick) */}
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
-          <OpponentPanel
-            player={slickBot as Player}
-            avatarColor="bg-emerald-600"
-            isActive={gameState.currentPlayerIndex === 1}
-            isUnoCalled={!!gameState.unoCalls[slickBot.id]}
-            onChallenge={handleChallenge}
-            layoutType="col"
-          />
-        </div>
+        {/* Left Opponent */}
+        {leftOpponent && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
+            <OpponentPanel
+              player={leftOpponent}
+              avatarColor="bg-emerald-600"
+              isActive={gameState.currentPlayerIndex === gameState.players.indexOf(leftOpponent)}
+              isUnoCalled={!!gameState.unoCalls[leftOpponent.id]}
+              onChallenge={handleChallenge}
+              layoutType="col"
+            />
+          </div>
+        )}
 
-        {/* Right Opponent (Bot 3 - Smarty) */}
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
-          <OpponentPanel
-            player={smartyBot as Player}
-            avatarColor="bg-purple-600"
-            isActive={gameState.currentPlayerIndex === 3}
-            isUnoCalled={!!gameState.unoCalls[smartyBot.id]}
-            onChallenge={handleChallenge}
-            layoutType="col"
-          />
-        </div>
+        {/* Right Opponent */}
+        {rightOpponent && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
+            <OpponentPanel
+              player={rightOpponent}
+              avatarColor="bg-purple-600"
+              isActive={gameState.currentPlayerIndex === gameState.players.indexOf(rightOpponent)}
+              isUnoCalled={!!gameState.unoCalls[rightOpponent.id]}
+              onChallenge={handleChallenge}
+              layoutType="col"
+            />
+          </div>
+        )}
 
         {/* Action Log Announcement Banner */}
         <div className="text-center px-8 z-10">
@@ -397,7 +421,8 @@ export const Board: React.FC<BoardProps> = ({
               <span className="text-xs font-bold text-amber-400">Choose a wild color below!</span>
             ) : (
               <span className="text-xs font-bold text-emerald-400">
-                Your turn! Play a matching card or draw.
+                {isPassAndPlay ? `${activePlayer.name}'s turn!` : 'Your turn!'} Play a matching card
+                or draw.
               </span>
             )
           ) : (
@@ -457,14 +482,41 @@ export const Board: React.FC<BoardProps> = ({
         )}
       </AnimatePresence>
 
-      {/* 5. Player Controls & Hand Panel */}
+      {/* 5. Pass & Play Interstitial Hand Overlay */}
+      {isPassAndPlay && !passConfirmed && (
+        <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-6 z-40">
+          <div className="w-16 h-16 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center text-amber-400 mb-4 animate-bounce">
+            <User size={32} />
+          </div>
+          <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-2">
+            Pass Phone to {activePlayer.name}
+          </h3>
+          <p className="text-xs text-slate-400 text-center max-w-xs mb-8">
+            Keep your hand secret! Hand device to {activePlayer.name} before revealing cards.
+          </p>
+          <button
+            onClick={() => {
+              soundManager.play('click')
+              setPassConfirmed(true)
+            }}
+            className="w-full max-w-xs py-3.5 px-6 bg-gradient-to-r from-red-500 via-amber-500 to-emerald-500 text-white font-bold rounded-2xl shadow-xl hover:opacity-90 active:scale-95 transition-all text-center flex items-center justify-center gap-2"
+          >
+            I am {activePlayer.name} - Reveal Hand
+            <ArrowRight size={18} />
+          </button>
+        </div>
+      )}
+
+      {/* 6. Player Controls & Hand Panel */}
       <div className="bg-slate-900 border-t border-slate-800 p-4 shrink-0 relative z-20">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5">
             <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold text-xs">
               <User size={12} />
             </div>
-            <span className="text-xs font-bold text-slate-200">Your Hand</span>
+            <span className="text-xs font-bold text-slate-200">
+              {isPassAndPlay ? `${myPlayer.name}'s Hand` : 'Your Hand'}
+            </span>
             <span className="text-[10px] bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded text-slate-400 font-extrabold">
               {myPlayer.hand.length} cards
             </span>
@@ -587,7 +639,7 @@ export const Board: React.FC<BoardProps> = ({
         </div>
       </div>
 
-      {/* 6. Game Over Overlay Screen */}
+      {/* 7. Game Over Overlay Screen */}
       {gameState.status === 'GAME_OVER' && (
         <div className="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-6 z-50 animate-fade-in">
           <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center text-slate-950 shadow-2xl mb-4 transform scale-110 animate-bounce">
@@ -595,12 +647,12 @@ export const Board: React.FC<BoardProps> = ({
           </div>
 
           <h3 className="text-3xl font-black text-center text-white tracking-tight uppercase leading-none mb-1">
-            {gameState.winnerId === 'player-0' ? 'Victory!' : 'Defeat!'}
+            {gameState.winnerId === 'player-0' || isPassAndPlay ? 'Victory!' : 'Defeat!'}
           </h3>
           <p className="text-slate-400 text-sm text-center max-w-xs mb-8">
-            {gameState.winnerId === 'player-0'
-              ? 'Incredible! You defeated Slick, Chippy, and Smarty Bot in this match.'
-              : `Match Over. ${gameState.players.find((p) => p.id === gameState.winnerId)?.name} wins the match.`}
+            {gameState.winnerId === 'player-0' && !isPassAndPlay
+              ? 'Incredible! You defeated the AI Bots in this match.'
+              : `Match Over. ${gameState.players.find((p) => p.id === gameState.winnerId)?.name} wins the match!`}
           </p>
 
           <button
