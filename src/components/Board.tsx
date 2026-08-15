@@ -3,10 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { RotateCcw, Bot, User, Award, Volume2, VolumeX, Info } from 'lucide-react'
 import { UnoCardUI, type CardColorType } from './UnoCardUI'
 import { type UnoGameState, type UnoCard, type CardColor, type Player } from '../engine/unoEngine'
+import { soundManager } from '../utils/soundManager'
 
 interface BoardProps {
   gameState: UnoGameState
   isMuted: boolean
+  volume: number
+  handleVolumeChange: (volume: number) => void
   toggleMute: () => void
   ruleModalOpen: boolean
   setRuleModalOpen: (open: boolean) => void
@@ -20,18 +23,16 @@ interface BoardProps {
   handleQuitMatch?: () => void
 }
 
-// Mobile haptic feedback helper placeholder
+// Mobile haptic feedback helper
 const triggerHaptic = (type: 'light' | 'medium' | 'success') => {
   if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
     if (type === 'light') window.navigator.vibrate(10)
     else if (type === 'medium') window.navigator.vibrate(30)
     else if (type === 'success') window.navigator.vibrate([40, 30, 40])
-  } else {
-    console.log(`[Haptic Feedback Placeholder] Triggered ${type} haptic buzz`)
   }
 }
 
-// Reusable OpponentPanel component to avoid duplication
+// Reusable OpponentPanel component
 interface OpponentPanelProps {
   player: Player
   avatarColor: string
@@ -103,6 +104,8 @@ const OpponentPanel: React.FC<OpponentPanelProps> = ({
 export const Board: React.FC<BoardProps> = ({
   gameState,
   isMuted,
+  volume,
+  handleVolumeChange,
   toggleMute,
   ruleModalOpen,
   setRuleModalOpen,
@@ -115,13 +118,9 @@ export const Board: React.FC<BoardProps> = ({
   isValidPlay,
   handleQuitMatch,
 }) => {
-  // Safe guard: Derive the required player objects from the array instead of relying on fixed indices.
   const myPlayer = gameState.players.find((p) => p.id === 'player-0') || gameState.players[0]
-
-  // Exclude player-0 to gather opponent bots dynamically
   const opponentBots = gameState.players.filter((p) => p.id !== 'player-0')
 
-  // Derive chippy, slick, and smarty safely or fallback
   const slickBot = opponentBots[0] || { id: 'bot-1', name: 'Slick Bot', hand: [] }
   const chippyBot = opponentBots[1] || { id: 'bot-2', name: 'Chippy Bot', hand: [] }
   const smartyBot = opponentBots[2] || { id: 'bot-3', name: 'Smarty Bot', hand: [] }
@@ -132,31 +131,27 @@ export const Board: React.FC<BoardProps> = ({
       ? gameState.discardPile[gameState.discardPile.length - 1]
       : null
 
-  // Local state to track drag vs tap events
   const dragActiveRef = useRef(false)
-
-  // Control modal open state derived from parent gameState & turn
   const isWildModalOpen = !!(gameState.selectedWildCard && isMyTurn)
 
-  // Simple tracking for dealt animations to avoid re-triggering constantly after initial build
+  // Derive hasDealt during render or update via timer callback
   const [hasDealt, setHasDealt] = useState(false)
+  const isPlaying = gameState.status === 'PLAYING'
 
   useEffect(() => {
-    if (gameState.status === 'PLAYING') {
-      if (!hasDealt) {
-        const timer = setTimeout(() => {
-          setHasDealt(true)
-        }, 1200)
-        return () => clearTimeout(timer)
-      }
+    if (isPlaying) {
+      const timer = setTimeout(() => {
+        setHasDealt(true)
+      }, 1200)
+      return () => clearTimeout(timer)
     } else {
-      // Reset hasDealt when no longer playing
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setHasDealt(false)
+      const timer = setTimeout(() => {
+        setHasDealt(false)
+      }, 0)
+      return () => clearTimeout(timer)
     }
-  }, [gameState.status, hasDealt])
+  }, [isPlaying])
 
-  // Fallback UI if required player data is incomplete
   if (!myPlayer || opponentBots.length < 3) {
     return (
       <div className="mobile-viewport flex flex-col items-center justify-center p-6 bg-slate-950 text-white">
@@ -171,7 +166,6 @@ export const Board: React.FC<BoardProps> = ({
     )
   }
 
-  // Fallback if discard pile is empty
   if (!topCard) {
     return (
       <div className="mobile-viewport flex flex-col items-center justify-center p-6 bg-slate-950 text-white">
@@ -188,7 +182,7 @@ export const Board: React.FC<BoardProps> = ({
 
   return (
     <div className="mobile-viewport select-none flex flex-col justify-between bg-slate-950 text-white overflow-hidden relative">
-      {/* 1. Header Navbar */}
+      {/* 1. Header Navbar with Global Mute / Volume Control */}
       <div className="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800 shrink-0 z-20">
         <button
           onClick={() => {
@@ -211,15 +205,31 @@ export const Board: React.FC<BoardProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={isMuted ? 0 : volume}
+            onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+            className="w-14 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+            title="Volume"
+            aria-label="Volume"
+          />
           <button
-            onClick={() => setRuleModalOpen(!ruleModalOpen)}
+            onClick={() => {
+              soundManager.play('click')
+              setRuleModalOpen(!ruleModalOpen)
+            }}
             className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white"
+            title="Rules"
           >
             <Info size={18} />
           </button>
           <button
             onClick={toggleMute}
             className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white"
+            title={isMuted ? 'Unmute' : 'Mute'}
           >
             {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
           </button>
@@ -237,7 +247,7 @@ export const Board: React.FC<BoardProps> = ({
           layoutType="row"
         />
 
-        {/* Dynamic Direction Indicator Widget with continuous rotating animation */}
+        {/* Direction Indicator Widget */}
         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 px-2 py-1 rounded-md">
           <motion.div
             animate={{
@@ -293,7 +303,7 @@ export const Board: React.FC<BoardProps> = ({
 
         {/* Card Piles Interaction Section */}
         <div className="flex items-center justify-center gap-8 my-auto z-10">
-          {/* Draw Pile (Tactile Framer Motion Interactions) */}
+          {/* Draw Pile with Sound Trigger on Tap */}
           <motion.button
             onClick={() => {
               triggerHaptic('light')
@@ -320,7 +330,7 @@ export const Board: React.FC<BoardProps> = ({
             )}
           </motion.button>
 
-          {/* Discard Pile with Smooth Curved Rotation animations */}
+          {/* Discard Pile */}
           <div className="relative">
             <AnimatePresence mode="popLayout">
               <motion.div
@@ -386,7 +396,7 @@ export const Board: React.FC<BoardProps> = ({
             gameState.selectedWildCard ? (
               <span className="text-xs font-bold text-amber-400">Choose a wild color below!</span>
             ) : (
-              <span className="text-xs font-bold text-emerald-400 font-semibold">
+              <span className="text-xs font-bold text-emerald-400">
                 Your turn! Play a matching card or draw.
               </span>
             )
@@ -398,7 +408,7 @@ export const Board: React.FC<BoardProps> = ({
         </div>
       </div>
 
-      {/* 4. Color Picker Modal overlay with z-50 */}
+      {/* 4. Color Picker Modal overlay */}
       <AnimatePresence>
         {isWildModalOpen && (
           <motion.div
@@ -483,7 +493,7 @@ export const Board: React.FC<BoardProps> = ({
           </div>
         </div>
 
-        {/* Scrollable hand with Deal and Drag-and-Play animation */}
+        {/* Scrollable hand with Deal, Selection, and Drag-and-Play animation */}
         <div className="flex gap-2.5 overflow-x-auto py-2 px-1 no-scrollbar min-h-[120px] scroll-smooth items-center">
           <AnimatePresence mode="popLayout">
             {myPlayer.hand.map((card, index) => {
@@ -530,13 +540,13 @@ export const Board: React.FC<BoardProps> = ({
                     damping: 18,
                     delay: !hasDealt ? index * 0.08 : 0,
                   }}
-                  // Framer Motion Dynamic Drag
                   drag={cardPlayable}
                   dragSnapToOrigin
                   dragElastic={0.4}
                   dragConstraints={{ left: 0, right: 0, top: -200, bottom: 50 }}
                   onDragStart={() => {
                     dragActiveRef.current = false
+                    soundManager.play('click')
                     triggerHaptic('light')
                   }}
                   onDragEnd={(_, info) => {
@@ -559,6 +569,7 @@ export const Board: React.FC<BoardProps> = ({
                         dragActiveRef.current = false
                         return
                       }
+                      soundManager.play('click')
                       triggerHaptic('success')
                       handlePlayCard(card.id)
                     }}
