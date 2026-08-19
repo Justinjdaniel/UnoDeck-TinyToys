@@ -54,7 +54,6 @@ const renderSymbol = (value: string, className: string) => {
     case 'wilddraw4':
       return <Symbols.WildDraw4Symbol size="100%" className={className} />
     default:
-      // Unknown values render raw value instead of Symbols.Number0
       return <span className={`text-base font-black italic select-none ${className}`}>{value}</span>
   }
 }
@@ -71,7 +70,6 @@ export const UnoCardUI: React.FC<UnoCardUIProps> = ({
   const normColor = card.color.toLowerCase() as 'red' | 'blue' | 'green' | 'yellow' | 'wild'
   const normValue = card.value.toLowerCase()
 
-  // Dynamic theme styling with neon glows
   const getThemeClasses = () => {
     switch (normColor) {
       case 'red':
@@ -119,16 +117,14 @@ export const UnoCardUI: React.FC<UnoCardUIProps> = ({
     return card.value
   })()
 
-  // Tactile design: Realistic 3D card back
   if (isFaceDown) {
     return (
       <div
-        className={`w-16 h-24 sm:w-20 sm:h-28 rounded-xl border-4 border-slate-800 bg-slate-900 flex flex-col items-center justify-center relative shadow-[0_0_15px_rgba(59,130,246,0.3)] flex-shrink-0 transition-all select-none ${className}`}
+        className={`w-14 h-20 sm:w-16 sm:h-24 md:w-20 md:h-28 rounded-xl border-2 border-slate-700 bg-slate-900 flex flex-col items-center justify-center relative shadow-[0_0_15px_rgba(59,130,246,0.3)] shrink-0 transition-all select-none ${className}`}
         style={style}
       >
-        <div className="absolute inset-1.5 bg-gradient-to-br from-cyan-600 via-blue-700 to-indigo-900 rounded-lg flex items-center justify-center border border-cyan-400 overflow-hidden shadow-inner">
-          <div className="absolute inset-0 opacity-20 bg-[linear-gradient(45deg,#fff_25%,transparent_25%,transparent_50%,#fff_50%,#fff_75%,transparent_75%,transparent)] bg-[length:12px_12px]" />
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-cyan-300 flex items-center justify-center font-black text-white italic text-lg sm:text-xl shadow-[0_0_12px_rgba(6,182,212,0.8)] rotate-[-15deg] transform bg-gradient-to-br from-cyan-500 to-blue-700">
+        <div className="absolute inset-1 bg-gradient-to-br from-cyan-600 via-blue-700 to-indigo-900 rounded-lg flex items-center justify-center border border-cyan-400 overflow-hidden shadow-inner">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-cyan-300 flex items-center justify-center font-black text-white italic text-sm sm:text-lg shadow-[0_0_12px_rgba(6,182,212,0.8)] rotate-[-15deg] transform bg-gradient-to-br from-cyan-500 to-blue-700">
             U
           </div>
         </div>
@@ -154,7 +150,7 @@ export const UnoCardUI: React.FC<UnoCardUIProps> = ({
     <div
       onClick={!disabled && isPlayable ? onClick : undefined}
       {...interactiveProps}
-      className={`w-16 h-24 sm:w-20 sm:h-28 rounded-xl border-2 flex flex-col items-center justify-center relative flex-shrink-0 select-none transition-all ${theme.bg} ${
+      className={`w-14 h-20 sm:w-16 sm:h-24 md:w-20 md:h-28 rounded-xl border-2 flex flex-col items-center justify-center relative shrink-0 select-none transition-all ${theme.bg} ${
         isPlayable && !disabled
           ? 'hover:-translate-y-3 hover:scale-105 active:scale-95 shadow-lg border-white cursor-pointer ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-950 focus:outline-none focus:ring-4 animate-pulse'
           : disabled || !isPlayable
@@ -163,21 +159,18 @@ export const UnoCardUI: React.FC<UnoCardUIProps> = ({
       } ${className}`}
       style={style}
     >
-      {/* Top Left Mini Value */}
       <div className="absolute top-1 left-1.5 text-[10px] sm:text-xs font-black tracking-tighter leading-none drop-shadow-[0_0_4px_rgba(0,0,0,0.8)]">
         {formattedMiniValue}
       </div>
 
-      {/* Realistic Inner Colored Oval Background */}
       <div
-        className={`w-11 h-16 sm:w-14 sm:h-20 rounded-[50%] border flex items-center justify-center transform rotate-[-12deg] shadow-inner ${theme.oval}`}
+        className={`w-10 h-14 sm:w-12 sm:h-18 rounded-[50%] border flex items-center justify-center transform rotate-[-12deg] shadow-inner ${theme.oval}`}
       >
-        <div className="transform rotate-[12deg] w-7 h-7 sm:w-10 sm:h-10 text-center flex items-center justify-center drop-shadow-md">
+        <div className="transform rotate-[12deg] w-6 h-6 sm:w-8 sm:h-8 text-center flex items-center justify-center drop-shadow-md">
           {renderSymbol(card.value, theme.text)}
         </div>
       </div>
 
-      {/* Bottom Right Mini Value (Rotated) */}
       <div className="absolute bottom-1 right-1.5 text-[10px] sm:text-xs font-black tracking-tighter leading-none transform rotate-180 drop-shadow-[0_0_4px_rgba(0,0,0,0.8)]">
         {formattedMiniValue}
       </div>

@@ -4,7 +4,6 @@ interface SymbolProps extends React.SVGProps<SVGSVGElement> {
   size?: number | string
 }
 
-// Single factory function for numbers
 const createNumberSymbol = (digit: string, hasUnderline: boolean): React.FC<SymbolProps> => {
   return ({ size = '100%', ...props }) => (
     <svg viewBox="0 0 100 100" width={size} height={size} fill="currentColor" {...props}>
@@ -25,7 +24,6 @@ const createNumberSymbol = (digit: string, hasUnderline: boolean): React.FC<Symb
   )
 }
 
-// Number Symbols (0-9) stable exports
 export const Number0 = createNumberSymbol('0', false)
 export const Number1 = createNumberSymbol('1', false)
 export const Number2 = createNumberSymbol('2', false)
@@ -37,7 +35,6 @@ export const Number7 = createNumberSymbol('7', false)
 export const Number8 = createNumberSymbol('8', false)
 export const Number9 = createNumberSymbol('9', true)
 
-// Skip Symbol (Circle with diagonal slash)
 export const SkipSymbol: React.FC<SymbolProps> = ({ size = '100%', ...props }) => (
   <svg
     viewBox="0 0 100 100"
@@ -53,7 +50,6 @@ export const SkipSymbol: React.FC<SymbolProps> = ({ size = '100%', ...props }) =
   </svg>
 )
 
-// Reverse Symbol (Curved counter arrows)
 export const ReverseSymbol: React.FC<SymbolProps> = ({ size = '100%', ...props }) => (
   <svg
     viewBox="0 0 100 100"
@@ -66,20 +62,15 @@ export const ReverseSymbol: React.FC<SymbolProps> = ({ size = '100%', ...props }
     strokeLinejoin="round"
     {...props}
   >
-    {/* Top arrow curving counter-clockwise/clockwise */}
     <path d="M 20,40 C 20,20 80,20 80,40" />
     <path d="M 12,32 L 20,40 L 28,32" fill="none" strokeWidth="10" />
-
-    {/* Bottom arrow curving back */}
     <path d="M 80,60 C 80,80 20,80 20,60" />
     <path d="M 88,68 L 80,60 L 72,68" fill="none" strokeWidth="10" />
   </svg>
 )
 
-// Draw 2 Symbol (Stacked card vector)
 export const Draw2Symbol: React.FC<SymbolProps> = ({ size = '100%', ...props }) => (
   <svg viewBox="0 0 100 100" width={size} height={size} fill="currentColor" {...props}>
-    {/* Back Card */}
     <rect
       x="22"
       y="15"
@@ -102,7 +93,6 @@ export const Draw2Symbol: React.FC<SymbolProps> = ({ size = '100%', ...props }) 
     >
       +2
     </text>
-    {/* Front Card */}
     <rect
       x="38"
       y="29"
@@ -128,33 +118,27 @@ export const Draw2Symbol: React.FC<SymbolProps> = ({ size = '100%', ...props }) 
   </svg>
 )
 
-// Wild Symbol (4-color segmented oval/wheel)
 export const WildSymbol: React.FC<SymbolProps> = ({ size = '100%', ...props }) => (
   <svg viewBox="0 0 100 100" width={size} height={size} {...props}>
-    {/* Segmented oval/wheel representing the 4 Uno colors */}
     <g transform="translate(50, 50) rotate(-45)">
-      {/* Top Left - Red */}
       <path
         d="M 0,0 L -35,-35 A 50,50 0 0,1 35,-35 Z"
         fill="#EF4444"
         stroke="white"
         strokeWidth="2"
       />
-      {/* Top Right - Blue */}
       <path
         d="M 0,0 L 35,-35 A 50,50 0 0,1 35,35 Z"
         fill="#3B82F6"
         stroke="white"
         strokeWidth="2"
       />
-      {/* Bottom Right - Yellow */}
       <path
         d="M 0,0 L 35,35 A 50,50 0 0,1 -35,35 Z"
         fill="#F59E0B"
         stroke="white"
         strokeWidth="2"
       />
-      {/* Bottom Left - Green */}
       <path
         d="M 0,0 L -35,35 A 50,50 0 0,1 -35,-35 Z"
         fill="#10B981"
@@ -166,13 +150,10 @@ export const WildSymbol: React.FC<SymbolProps> = ({ size = '100%', ...props }) =
   </svg>
 )
 
-// Wild Draw 4 Symbol (Stacked 4-color cards vector)
 export const WildDraw4Symbol: React.FC<SymbolProps> = ({ size = '100%', ...props }) => {
   const filterId = React.useId().replace(/:/g, '-')
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} {...props}>
-      {/* Stacked 4 cards, each with one of the four colors */}
-      {/* Card 1: Yellow */}
       <rect
         x="15"
         y="15"
@@ -184,7 +165,6 @@ export const WildDraw4Symbol: React.FC<SymbolProps> = ({ size = '100%', ...props
         strokeWidth="3"
         transform="rotate(-15, 32, 39)"
       />
-      {/* Card 2: Red */}
       <rect
         x="28"
         y="15"
@@ -196,7 +176,6 @@ export const WildDraw4Symbol: React.FC<SymbolProps> = ({ size = '100%', ...props
         strokeWidth="3"
         transform="rotate(-5, 45, 39)"
       />
-      {/* Card 3: Green */}
       <rect
         x="42"
         y="18"
@@ -208,7 +187,6 @@ export const WildDraw4Symbol: React.FC<SymbolProps> = ({ size = '100%', ...props
         strokeWidth="3"
         transform="rotate(5, 59, 42)"
       />
-      {/* Card 4: Blue */}
       <rect
         x="52"
         y="24"
@@ -220,8 +198,6 @@ export const WildDraw4Symbol: React.FC<SymbolProps> = ({ size = '100%', ...props
         strokeWidth="3"
         transform="rotate(15, 69, 48)"
       />
-
-      {/* Center Text overlaying the stack */}
       <filter id={filterId}>
         <feDropShadow dx="2" dy="2" stdDeviation="1.5" floodOpacity="0.5" />
       </filter>
